@@ -10,7 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@deck.gl/core": "^9.2.2",
+    "@deck.gl/layers": "^9.2.2",
+    "@deck.gl/mapbox": "^9.2.2",
     "@maptiler/sdk": "^3.9.0",
+    "deck.gl": "^9.2.2",
+    "maplibre-gl": "^5.13.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
@@ -24,5 +29,18 @@
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
     "vite": "^7.2.4"
-  }
+  },
+  "description": "MapTiler is a complete mapping platform that combines beautiful base maps with the ability to add dynamic data layers (like weather) on top",
+  "main": "eslint.config.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/insane-io/maptiler-v-.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/insane-io/maptiler-v-/issues"
+  },
+  "homepage": "https://github.com/insane-io/maptiler-v-#readme"
 }
