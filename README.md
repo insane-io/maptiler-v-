@@ -51,39 +51,14 @@ Beautiful animated weather map!
 
 ---
 
-## ✅ Why This Stack?
-
-- **Modern:** WebGL-powered, not outdated Canvas/SVG
-- **Fast:** Hardware-accelerated rendering
-- **Flexible:** Mix any data source, full customization
-- **Free:** All core tools open-source, free data sources available
-- **Professional:** Used by Uber, Airbnb, enterprise apps
-- **3D Ready:** Supports terrain, elevation, 3D buildings
-
----
-
 ## 🚫 Why Not Windy?
 
 - **Windy Map API:** Uses Leaflet (incompatible with MapLibre)
 - **Windy Point API:** Compatible, but expensive (€990/year)
-- **Our approach:** Use free/cheaper alternatives with same quality
 
 ---
 
-## 💰 Cost Estimate
-
-**Free Tier (Development):** $0/month
-- MapTiler free tier
-- OpenWeatherMap free tier
-- All other sources free
-
-**Production:** $50-150/month
-- MapTiler paid plan
-- Higher API limits
-
----
-
-## 📚 Key Documentation
+## 📚 Key Documentation and Imp Links 
 
 - MapLibre: https://maplibre.org/
 - MapTiler: https://docs.maptiler.com/
@@ -91,6 +66,12 @@ Beautiful animated weather map!
 - OpenWeatherMap: https://openweathermap.org/api
 - Open-Meteo: https://open-meteo.com/
 - WAQI: https://aqicn.org/api/
+- https://github.com/maplibre/awesome-maplibre
+- https://www.maptiler.com/tools/weather/
+- https://weatherlayers.com/demo.html
+- Deck.gl: https://deck.gl/examples/google-maps  
+- https://docs.maptiler.com/sdk-js/examples/weather-wind-temperature/
+
 
 ---
 
