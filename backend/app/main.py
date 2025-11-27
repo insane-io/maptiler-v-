@@ -47,7 +47,8 @@ async def connect_ais_stream():
 
                 async for message_json in websocket:
                     message = json.loads(message_json)
-                    
+     
+            # Just return empty collection on error to prevent map breaking               
                     if message.get("MessageType") == "PositionReport":
                         data = message["Message"]["PositionReport"]
                         mmsi = data["UserID"]
