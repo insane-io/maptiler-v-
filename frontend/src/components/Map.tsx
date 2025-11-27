@@ -1,27 +1,36 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, FC } from 'react';
 import * as maptilersdk from '@maptiler/sdk';
 import '@maptiler/sdk/dist/maptiler-sdk.css';
 import { MAPTILER_KEY, AQI_COLORS } from '../utils/constants';
 import Sidebar from './Sidebar';
 import Timeline from './Timeline';
 import InfoPanel from './InfoPanel';
+import type {
+  VesselData,
+  CycloneData,
+  CycloneTrackData,
+  WaveData,
+  AQIData,
+  GeoJSONProperties,
+  MapPosition,
+} from '../types';
 
 // Import mock data
-import mockVessels from '../data/mockVessels.json';
-import mockCyclones from '../data/mockCyclones.json';
-import mockCycloneTracks from '../data/mockCycloneTracks.json';
-import mockWaves from '../data/mockWaves.json';
-import mockAQI from '../data/mockAQI.json';
+import mockVessels from '../data/mockVessels.json' with { type: 'json' };
+import mockCyclones from '../data/mockCyclones.json' with { type: 'json' };
+import mockCycloneTracks from '../data/mockCycloneTracks.json' with { type: 'json' };
+import mockWaves from '../data/mockWaves.json' with { type: 'json' };
+import mockAQI from '../data/mockAQI.json' with { type: 'json' };
 
-function Map() {
-  const mapContainer = useRef(null);
-  const map = useRef(null);
-  const [mapLoaded, setMapLoaded] = useState(false);
-  const [activeLayers, setActiveLayers] = useState(['satellite']);
-  const [hoveredFeature, setHoveredFeature] = useState(null);
-  const [clickedFeature, setClickedFeature] = useState(null);
-  const initialized = useRef(false);
-  const popup = useRef(null);
+const Map: FC = () => {
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<maptilersdk.Map | null>(null);
+  const [mapLoaded, setMapLoaded] = useState<boolean>(false);
+  const [activeLayers, setActiveLayers] = useState<string[]>(['satellite']);
+  const [hoveredFeature, setHoveredFeature] = useState<GeoJSONProperties | null>(null);
+  const [clickedFeature, setClickedFeature] = useState<GeoJSONProperties | null>(null);
+  const initialized = useRef<boolean>(false);
+  const popup = useRef<maptilersdk.Popup | null>(null);
 
   useEffect(() => {
     if (initialized.current) return;
@@ -33,7 +42,7 @@ function Map() {
     console.log('🗺️ Initializing Ocean Analysis Map...');
 
     map.current = new maptilersdk.Map({
-      container: mapContainer.current,
+      container: mapContainer.current!,
       style: `https://api.maptiler.com/maps/hybrid/style.json?key=${MAPTILER_KEY}`,
       center: [78.9629, 15.0], // Indian Ocean focus
       zoom: 5,
@@ -56,14 +65,14 @@ function Map() {
     };
   }, []);
 
-  const initializeLayers = () => {
+  const initializeLayers = (): void => {
     // 1. VESSELS LAYER
-    map.current.addSource('vessels', {
+    map.current!.addSource('vessels', {
       type: 'geojson',
-      data: mockVessels
+      data: mockVessels as unknown as VesselData
     });
 
-    map.current.addLayer({
+    map.current!.addLayer({
       id: 'vessels-layer',
       type: 'circle',
       source: 'vessels',
@@ -83,10 +92,10 @@ function Map() {
       layout: {
         'visibility': 'none'
       }
-    });
+    } as any);
 
     // Vessel labels
-    map.current.addLayer({
+    map.current!.addLayer({
       id: 'vessels-labels',
       type: 'symbol',
       source: 'vessels',
@@ -102,15 +111,15 @@ function Map() {
         'text-halo-color': '#000000',
         'text-halo-width': 1
       }
-    });
+    } as any);
 
     // 2. CYCLONES LAYER
-    map.current.addSource('cyclones', {
+    map.current!.addSource('cyclones', {
       type: 'geojson',
-      data: mockCyclones
+      data: mockCyclones as unknown as CycloneData
     });
 
-    map.current.addLayer({
+    map.current!.addLayer({
       id: 'cyclones-layer',
       type: 'circle',
       source: 'cyclones',
@@ -133,10 +142,10 @@ function Map() {
       layout: {
         'visibility': 'none'
       }
-    });
+    } as any);
 
     // Cyclone labels
-    map.current.addLayer({
+    map.current!.addLayer({
       id: 'cyclones-labels',
       type: 'symbol',
       source: 'cyclones',
@@ -152,15 +161,15 @@ function Map() {
         'text-halo-color': '#e74c3c',
         'text-halo-width': 2
       }
-    });
+    } as any);
 
     // Cyclone tracks
-    map.current.addSource('cyclone-tracks', {
+    map.current!.addSource('cyclone-tracks', {
       type: 'geojson',
-      data: mockCycloneTracks
+      data: mockCycloneTracks as unknown as CycloneTrackData
     });
 
-    map.current.addLayer({
+    map.current!.addLayer({
       id: 'cyclone-tracks-layer',
       type: 'line',
       source: 'cyclone-tracks',
@@ -183,15 +192,15 @@ function Map() {
       layout: {
         'visibility': 'none'
       }
-    });
+    } as any);
 
     // 3. WAVES HEATMAP
-    map.current.addSource('waves', {
+    map.current!.addSource('waves', {
       type: 'geojson',
-      data: mockWaves
+      data: mockWaves as unknown as WaveData
     });
 
-    map.current.addLayer({
+    map.current!.addLayer({
       id: 'waves-heatmap',
       type: 'heatmap',
       source: 'waves',
@@ -221,15 +230,15 @@ function Map() {
       layout: {
         'visibility': 'none'
       }
-    });
+    } as any);
 
     // 4. AQI LAYER
-    map.current.addSource('aqi', {
+    map.current!.addSource('aqi', {
       type: 'geojson',
-      data: mockAQI
+      data: mockAQI as unknown as AQIData
     });
 
-    map.current.addLayer({
+    map.current!.addLayer({
       id: 'aqi-layer',
       type: 'circle',
       source: 'aqi',
@@ -252,10 +261,10 @@ function Map() {
       layout: {
         'visibility': 'none'
       }
-    });
+    } as any);
 
     // AQI labels
-    map.current.addLayer({
+    map.current!.addLayer({
       id: 'aqi-labels',
       type: 'symbol',
       source: 'aqi',
@@ -271,10 +280,10 @@ function Map() {
         'text-halo-color': '#000000',
         'text-halo-width': 1
       }
-    });
+    } as any);
 
     // 5. WIND LAYER (OpenWeatherMap)
-    map.current.addSource('wind-tiles', {
+    map.current!.addSource('wind-tiles', {
       type: 'raster',
       tiles: [
         `https://tile.openweathermap.org/map/wind_new/{z}/{x}/{y}.png?appid=${import.meta.env.VITE_OPENWEATHER_KEY || 'demo'}`
@@ -282,7 +291,7 @@ function Map() {
       tileSize: 256
     });
 
-    map.current.addLayer({
+    map.current!.addLayer({
       id: 'wind-layer',
       type: 'raster',
       source: 'wind-tiles',
@@ -292,10 +301,10 @@ function Map() {
       layout: {
         'visibility': 'none'
       }
-    });
+    } as any);
 
     // 6. PRECIPITATION LAYER
-    map.current.addSource('precipitation-tiles', {
+    map.current!.addSource('precipitation-tiles', {
       type: 'raster',
       tiles: [
         `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${import.meta.env.VITE_OPENWEATHER_KEY || 'demo'}`
@@ -303,7 +312,7 @@ function Map() {
       tileSize: 256
     });
 
-    map.current.addLayer({
+    map.current!.addLayer({
       id: 'precipitation-layer',
       type: 'raster',
       source: 'precipitation-tiles',
@@ -313,10 +322,10 @@ function Map() {
       layout: {
         'visibility': 'none'
       }
-    });
+    } as any);
 
     // 7. TEMPERATURE LAYER
-    map.current.addSource('temperature-tiles', {
+    map.current!.addSource('temperature-tiles', {
       type: 'raster',
       tiles: [
         `https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=${import.meta.env.VITE_OPENWEATHER_KEY || 'demo'}`
@@ -324,7 +333,7 @@ function Map() {
       tileSize: 256
     });
 
-    map.current.addLayer({
+    map.current!.addLayer({
       id: 'temperature-layer',
       type: 'raster',
       source: 'temperature-tiles',
@@ -334,10 +343,10 @@ function Map() {
       layout: {
         'visibility': 'none'
       }
-    });
+    } as any);
 
     // 8. PRESSURE LAYER
-    map.current.addSource('pressure-tiles', {
+    map.current!.addSource('pressure-tiles', {
       type: 'raster',
       tiles: [
         `https://tile.openweathermap.org/map/pressure_new/{z}/{x}/{y}.png?appid=${import.meta.env.VITE_OPENWEATHER_KEY || 'demo'}`
@@ -345,7 +354,7 @@ function Map() {
       tileSize: 256
     });
 
-    map.current.addLayer({
+    map.current!.addLayer({
       id: 'pressure-layer',
       type: 'raster',
       source: 'pressure-tiles',
@@ -355,10 +364,10 @@ function Map() {
       layout: {
         'visibility': 'none'
       }
-    });
+    } as any);
 
     // 9. CLOUDS LAYER (Instead of humidity - more visual)
-    map.current.addSource('clouds-tiles', {
+    map.current!.addSource('clouds-tiles', {
       type: 'raster',
       tiles: [
         `https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=${import.meta.env.VITE_OPENWEATHER_KEY || 'demo'}`
@@ -366,8 +375,8 @@ function Map() {
       tileSize: 256
     });
 
-    map.current.addLayer({
-      id: 'humidity-layer', // Keep same ID for sidebar compatibility
+    map.current!.addLayer({
+      id: 'humidity-layer', 
       type: 'raster',
       source: 'clouds-tiles',
       paint: {
@@ -376,10 +385,10 @@ function Map() {
       layout: {
         'visibility': 'none'
       }
-    });
+    } as any);
 
     // 10. RADAR LAYER (Precipitation intensity)
-    map.current.addSource('radar-tiles', {
+    map.current!.addSource('radar-tiles', {
       type: 'raster',
       tiles: [
         `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${import.meta.env.VITE_OPENWEATHER_KEY || 'demo'}`
@@ -387,7 +396,7 @@ function Map() {
       tileSize: 256
     });
 
-    map.current.addLayer({
+    map.current!.addLayer({
       id: 'radar-layer',
       type: 'raster',
       source: 'radar-tiles',
@@ -397,29 +406,29 @@ function Map() {
       layout: {
         'visibility': 'none'
       }
-    });
+    } as any);
 
     console.log('✅ All layers initialized');
   };
 
-  const setupInteractions = () => {
+  const setupInteractions = (): void => {
     // Hover effects for vessels
-    map.current.on('mouseenter', 'vessels-layer', (e) => {
-      map.current.getCanvas().style.cursor = 'pointer';
-      if (e.features.length > 0) {
+    map.current!.on('mouseenter', 'vessels-layer', (e: maptilersdk.MapLayerMouseEvent) => {
+      map.current!.getCanvas().style.cursor = 'pointer';
+      if (e.features && e.features.length > 0) {
         setHoveredFeature(e.features[0].properties);
       }
     });
 
-    map.current.on('mouseleave', 'vessels-layer', () => {
-      map.current.getCanvas().style.cursor = '';
+    map.current!.on('mouseleave', 'vessels-layer', () => {
+      map.current!.getCanvas().style.cursor = '';
       setHoveredFeature(null);
     });
 
     // Click for detailed popup
-    map.current.on('click', 'vessels-layer', (e) => {
-      const feature = e.features[0];
-      const coordinates = feature.geometry.coordinates.slice();
+    map.current!.on('click', 'vessels-layer', (e: maptilersdk.MapLayerMouseEvent) => {
+      const feature = e.features![0];
+      const coordinates = (feature.geometry as any).coordinates as [number, number];
       const props = feature.properties;
 
       if (popup.current) popup.current.remove();
@@ -441,13 +450,13 @@ function Map() {
             </div>
           </div>
         `)
-        .addTo(map.current);
+        .addTo(map.current!);
     });
 
     // Similar interactions for cyclones
-    map.current.on('click', 'cyclones-layer', (e) => {
-      const feature = e.features[0];
-      const coordinates = feature.geometry.coordinates.slice();
+    map.current!.on('click', 'cyclones-layer', (e: maptilersdk.MapLayerMouseEvent) => {
+      const feature = e.features![0];
+      const coordinates = (feature.geometry as any).coordinates as [number, number];
       const props = feature.properties;
 
       if (popup.current) popup.current.remove();
@@ -468,13 +477,13 @@ function Map() {
             </div>
           </div>
         `)
-        .addTo(map.current);
+        .addTo(map.current!);
     });
 
     // AQI clicks
-    map.current.on('click', 'aqi-layer', (e) => {
-      const feature = e.features[0];
-      const coordinates = feature.geometry.coordinates.slice();
+    map.current!.on('click', 'aqi-layer', (e: maptilersdk.MapLayerMouseEvent) => {
+      const feature = e.features![0];
+      const coordinates = (feature.geometry as any).coordinates as [number, number];
       const props = feature.properties;
 
       if (popup.current) popup.current.remove();
@@ -493,16 +502,16 @@ function Map() {
             </div>
           </div>
         `)
-        .addTo(map.current);
+        .addTo(map.current!);
     });
   };
 
-  const handleLayerToggle = (layerId) => {
+  const handleLayerToggle = (layerId: string): void => {
     if (!map.current) return;
 
     console.log('🔄 Toggle layer:', layerId);
 
-    const layerMap = {
+    const layerMap: Record<string, string[]> = {
       'vessels': ['vessels-layer', 'vessels-labels'],
       'cyclones': ['cyclones-layer', 'cyclones-labels', 'cyclone-tracks-layer'],
       'waves': ['waves-heatmap'],
@@ -526,8 +535,8 @@ function Map() {
       const newVisibility = isActive ? 'none' : 'visible';
 
       layers.forEach(layer => {
-        if (map.current.getLayer(layer)) {
-          map.current.setLayoutProperty(layer, 'visibility', newVisibility);
+        if (map.current!.getLayer(layer)) {
+          map.current!.setLayoutProperty(layer, 'visibility', newVisibility as 'visible' | 'none');
           console.log(`  ${isActive ? '❌' : '✅'} ${layer}: ${newVisibility}`);
         }
       });
@@ -543,15 +552,13 @@ function Map() {
       {mapLoaded && (
         <>
           <Sidebar onLayerToggle={handleLayerToggle} activeLayers={activeLayers} />
-          <Timeline onTimeChange={(time) => console.log('Time changed:', time)} />
+          <Timeline onTimeChange={(time: any) => console.log('Time changed:', time)} />
           <InfoPanel
             data={hoveredFeature}
             position={map.current?.getCenter()}
           />
         </>
       )}
-
-      
     </div>
   );
 }
