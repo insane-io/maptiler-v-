@@ -1,0 +1,65 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "vessel_name": "MAERSK CHENNAI",
+        "imo": 9234567,
+        "mmsi": 563000001,
+        "type": "Container Ship",
+        "speed": 18.5,
+        "course": 245,
+        "heading": 245,
+        "destination": "Mumbai Port",
+        "eta": "2025-11-29T14:30:00Z",
+        "flag": "IN",
+        "last_updated": "2025-11-27T10:30:00Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [72.85, 18.95]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "vessel_name": "OCEAN PRIDE",
+        "imo": 9345678,
+        "mmsi": 563000002,
+        "type": "Tanker",
+        "speed": 12.3,
+        "course": 90,
+        "heading": 90,
+        "destination": "Kochi",
+        "eta": "2025-11-28T08:00:00Z",
+        "flag": "IN",
+        "last_updated": "2025-11-27T10:30:00Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [75.5, 10.2]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "vessel_name": "INDIAN EXPLORER",
+        "imo": 9456789,
+        "mmsi": 563000003,
+        "type": "Cargo Ship",
+        "speed": 15.7,
+        "course": 180,
+        "heading": 180,
+        "destination": "Chennai Port",
+        "eta": "2025-11-27T22:00:00Z",
+        "flag": "IN",
+        "last_updated": "2025-11-27T10:30:00Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [80.3, 13.1]
+      }
+    }
+  ]
+}

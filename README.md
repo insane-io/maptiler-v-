@@ -71,6 +71,7 @@ Beautiful animated weather map!
 - https://weatherlayers.com/demo.html
 - Deck.gl: https://deck.gl/examples/google-maps  
 - https://docs.maptiler.com/sdk-js/examples/weather-wind-temperature/
+- https://zoom.earth/maps/satellite/  --- must check
 
 
 ---
@@ -81,5 +82,3 @@ Beautiful animated weather map!
 **Data:** MapTiler (the maps)  
 **Visualization:** Deck.gl (the weather layers)  
 **Weather Data:** Various free APIs (the information)
-
-**Result:** Custom weather app with Windy-like features, full control, modern tech.
