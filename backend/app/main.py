@@ -16,7 +16,10 @@ AISSTREAM_API_KEY = os.getenv("AISSTREAM_API_KEY")
 AQICN_TOKEN = os.getenv("AQICN_TOKEN")
 AQICN_BASE_URL = "https://api.waqi.info/map/bounds"
 
-BOUNDING_BOX = [[30.0, -10.0], [70.0, 40.0]]
+BOUNDING_BOX = [[0.0, 30.0], [50.0, 150.0]]  # Covers Indian Ocean, SE Asia, China, Japan
+
+# --- Global Data Storage ---
+vessels = {}  # Store vessel data by MMSI
 
 def get_aqi_color(aqi: int) -> str:
     """

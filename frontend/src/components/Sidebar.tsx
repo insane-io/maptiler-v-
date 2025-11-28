@@ -1,9 +1,15 @@
-import { useState } from "react";
+import { useState, FC, MouseEvent } from "react";
+import type { LayerSection } from '../types';
 
-export default function Sidebar({ activeLayers = [], onLayerToggle }) {
-  const [collapsed, setCollapsed] = useState(false);
+interface SidebarProps {
+  activeLayers?: string[];
+  onLayerToggle: (layerId: string) => void;
+}
 
-  const sections = [
+const Sidebar: FC<SidebarProps> = ({ activeLayers = [], onLayerToggle }) => {
+  const [collapsed, setCollapsed] = useState<boolean>(false);
+
+  const sections: LayerSection[] = [
     {
       id: "base",
       title: "BASE MAP",
@@ -124,7 +130,7 @@ export default function Sidebar({ activeLayers = [], onLayerToggle }) {
           `}
         </style>
 
-        {sections.map((section) => (
+        {sections.map((section: LayerSection) => (
           <div key={section.id} style={{ paddingBottom: "6px" }}>
             <div
               style={{
@@ -162,14 +168,14 @@ export default function Sidebar({ activeLayers = [], onLayerToggle }) {
                     cursor: "pointer",
                     transition: "0.2s",
                   }}
-                  onMouseEnter={(e) => {
+                  onMouseEnter={(e: MouseEvent<HTMLButtonElement>) => {
                     if (!isActive)
-                      e.currentTarget.style.background =
+                      (e.currentTarget as HTMLButtonElement).style.background =
                         "rgba(255,255,255,0.05)";
                   }}
-                  onMouseLeave={(e) => {
+                  onMouseLeave={(e: MouseEvent<HTMLButtonElement>) => {
                     if (!isActive)
-                      e.currentTarget.style.background = "transparent";
+                      (e.currentTarget as HTMLButtonElement).style.background = "transparent";
                   }}
                 >
                   {layer.name}
@@ -182,3 +188,5 @@ export default function Sidebar({ activeLayers = [], onLayerToggle }) {
     </div>
   );
 }
+
+export default Sidebar;
