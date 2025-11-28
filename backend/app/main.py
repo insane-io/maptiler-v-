@@ -20,18 +20,16 @@ AISSTREAM_API_KEY = os.getenv("AISSTREAM_API_KEY")
 AQICN_TOKEN = os.getenv("AQICN_TOKEN")
 AQICN_BASE_URL = "https://api.waqi.info/map/bounds"
 
-# Static Bounding Box for AISStream Subscription (Background Data Collection)
-# We subscribe to a large area, but filter the view in the API
-SUBSCRIPTION_BOX = [[30.0, -10.0], [70.0, 40.0]] 
+BOUNDING_BOX = [[0.0, 30.0], [50.0, 150.0]]  # Covers Indian Ocean, SE Asia, China, Japan
+
+
+vessels = {}
 
 # --- OPEN-METEO SETUP ---
 # Setup the client with caching to prevent rate limiting
 cache_session = requests_cache.CachedSession('.cache', expire_after=3600)
 retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
 openmeteo = openmeteo_requests.Client(session=retry_session)
-
-# In-memory storage
-vessels = {}
 
 # --- HELPER FUNCTIONS ---
 def get_aqi_color(aqi: int) -> str:
