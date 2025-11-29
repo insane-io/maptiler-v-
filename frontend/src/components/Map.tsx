@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, FC, useCallback } from 'react';
+import React, { useEffect, useRef, useState, FC, useCallback } from 'react';
 import * as maptilersdk from '@maptiler/sdk';
 import '@maptiler/sdk/dist/maptiler-sdk.css';
 import { MAPTILER_KEY, AQI_COLORS } from '../utils/constants';
@@ -43,25 +43,32 @@ const fetchVesselsFromBackend = async (
       max_lon: maxLon.toString(),
     });
 
-    const response = await fetch(`${BACKEND_API_URL}/api/vessels?${params}`, {
+    const url = `${BACKEND_API_URL}/api/vessels?${params}`;
+    console.log(`🔍 Fetching vessels: ${url.substring(0, 80)}...`);
+
+    const response = await fetch(url, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-cache'
     });
     
     if (!response.ok) {
-      console.warn(`Backend API error: ${response.status}`);
-      // Fall back to mock data if backend unavailable
-      return mockVessels as unknown as GeoJSONFeatureCollection;
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
     const data = await response.json();
-    console.log(`✅ Fetched ${data.features.length} vessels from backend`);
+    
+    // Validate response structure
+    if (!data || typeof data !== 'object' || !Array.isArray(data.features)) {
+      console.warn('⚠️ Invalid vessels response format');
+      return { type: 'FeatureCollection', features: [] };
+    }
+    
+    console.log(`✅ Vessels: ${data.features.length} found`);
     return data;
-  } catch (error) {
-    console.error('❌ Failed to fetch vessels from backend:', error);
-    // Fall back to mock data
-    console.log('⚠️ Using mock vessel data');
-    return mockVessels as unknown as GeoJSONFeatureCollection;
+  } catch (error: any) {
+    console.error('❌ Vessels fetch error:', error.message || error);
+    return { type: 'FeatureCollection', features: [] };
   }
 };
 
@@ -82,25 +89,78 @@ const fetchAQIFromBackend = async (
       max_lon: maxLon.toString(),
     });
 
-    const response = await fetch(`${BACKEND_API_URL}/api/aqi?${params}`, {
+    const url = `${BACKEND_API_URL}/api/aqi?${params}`;
+    console.log(`🔍 Fetching AQI: ${url.substring(0, 80)}...`);
+
+    const response = await fetch(url, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-cache'
     });
     
     if (!response.ok) {
-      console.warn(`Backend AQI API error: ${response.status}`);
-      // Fall back to mock data if backend unavailable
-      return mockAQI as unknown as GeoJSONFeatureCollection;
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
     const data = await response.json();
-    console.log(`✅ Fetched ${data.features.length} AQI stations from backend`);
+    
+    // Validate response structure
+    if (!data || typeof data !== 'object' || !Array.isArray(data.features)) {
+      console.warn('⚠️ Invalid AQI response format');
+      return { type: 'FeatureCollection', features: [] };
+    }
+    
+    console.log(`✅ AQI: ${data.features.length} stations found`);
     return data;
-  } catch (error) {
-    console.error('❌ Failed to fetch AQI from backend:', error);
-    // Fall back to mock data
-    console.log('⚠️ Using mock AQI data');
-    return mockAQI as unknown as GeoJSONFeatureCollection;
+  } catch (error: any) {
+    console.error('❌ AQI fetch error:', error.message || error);
+    return { type: 'FeatureCollection', features: [] };
+  }
+};
+
+/**
+ * Fetch waves data from backend API for a given bounding box
+ */
+const fetchWavesFromBackend = async (
+  minLat: number,
+  minLon: number,
+  maxLat: number,
+  maxLon: number
+): Promise<GeoJSONFeatureCollection | null> => {
+  try {
+    const params = new URLSearchParams({
+      min_lat: minLat.toString(),
+      min_lon: minLon.toString(),
+      max_lat: maxLat.toString(),
+      max_lon: maxLon.toString(),
+    });
+
+    const url = `${BACKEND_API_URL}/api/waves?${params}`;
+    console.log(`🔍 Fetching waves: ${url.substring(0, 80)}...`);
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-cache'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    // Validate response structure
+    if (!data || typeof data !== 'object' || !Array.isArray(data.features)) {
+      console.warn('⚠️ Invalid waves response format');
+      return { type: 'FeatureCollection', features: [] };
+    }
+    
+    console.log(`✅ Waves: ${data.features.length} points found`);
+    return data;
+  } catch (error: any) {
+    console.error('❌ Waves fetch error:', error.message || error);
+    return { type: 'FeatureCollection', features: [] };
   }
 };
 
@@ -109,6 +169,7 @@ const Map: FC = () => {
   const map = useRef<maptilersdk.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState<boolean>(false);
   const [activeLayers, setActiveLayers] = useState<string[]>(['satellite']);
+  const activeLayersRef = useRef<string[]>(['satellite']);
   const [hoveredFeature, setHoveredFeature] = useState<GeoJSONProperties | null>(null);
   const [clickedFeature, setClickedFeature] = useState<GeoJSONProperties | null>(null);
   const initialized = useRef<boolean>(false);
@@ -116,7 +177,8 @@ const Map: FC = () => {
   const fetchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /**
-   * Update vessel and AQI data from backend based on current map bounds
+   * Update vessel, AQI, and waves data from backend based on current map bounds
+   * Only fetches data for layers that are currently active
    */
   const updateDataFromBackend = useCallback(async (): Promise<void> => {
     if (!map.current) return;
@@ -129,36 +191,83 @@ const Map: FC = () => {
     const maxLat = bounds.getNorth();
     const maxLon = bounds.getEast();
 
+    // Use ref to get current active layers (avoids stale closure issues)
+    const currentActiveLayers = activeLayersRef.current;
+
     console.log(`📍 Fetching data for bbox: [${minLat.toFixed(2)}, ${minLon.toFixed(2)}] to [${maxLat.toFixed(2)}, ${maxLon.toFixed(2)}]`);
+    console.log(`📋 Active layers: ${currentActiveLayers.join(', ')}`);
 
-    // Fetch both vessels and AQI data in parallel
-    const [vesselData, aqiData] = await Promise.all([
-      fetchVesselsFromBackend(minLat, minLon, maxLat, maxLon),
-      fetchAQIFromBackend(minLat, minLon, maxLat, maxLon)
-    ]);
+    // Build array of fetch promises only for active layers
+    const fetchPromises: Promise<GeoJSONFeatureCollection | null>[] = [];
+    const fetchTypes: string[] = [];
 
-    if (map.current) {
-      // Update vessels
-      if (vesselData) {
-        const vesselSource = map.current.getSource('vessels') as maptilersdk.GeoJSONSource | undefined;
-        if (vesselSource) {
-          vesselSource.setData(vesselData);
-          console.log(`🚢 Vessel layer updated with ${vesselData.features.length} vessels`);
-        }
-      }
-
-      // Update AQI
-      if (aqiData) {
-        const aqiSource = map.current.getSource('aqi') as maptilersdk.GeoJSONSource | undefined;
-        if (aqiSource) {
-          aqiSource.setData(aqiData);
-          console.log(`💨 AQI layer updated with ${aqiData.features.length} stations`);
-        }
-      }
+    if (currentActiveLayers.includes('vessels')) {
+      fetchPromises.push(fetchVesselsFromBackend(minLat, minLon, maxLat, maxLon));
+      fetchTypes.push('vessels');
     }
-  }, []);
+    if (currentActiveLayers.includes('aqi')) {
+      fetchPromises.push(fetchAQIFromBackend(minLat, minLon, maxLat, maxLon));
+      fetchTypes.push('aqi');
+    }
+    if (currentActiveLayers.includes('waves')) {
+      fetchPromises.push(fetchWavesFromBackend(minLat, minLon, maxLat, maxLon));
+      fetchTypes.push('waves');
+    }
 
-  // NOTE: 'Show All' controls removed — use the Sidebar layer toggles to show/hide layers.
+    // Only fetch if there are active data layers
+    if (fetchPromises.length === 0) {
+      console.log('⚠️ No active data layers to fetch');
+      return;
+    }
+
+    console.log(`🔄 Fetching ${fetchTypes.length} data types: ${fetchTypes.join(', ')}`);
+    
+    // Update each layer immediately as data arrives (progressive display)
+    const updateLayer = (layerType: string, data: GeoJSONFeatureCollection | null) => {
+      if (!map.current || !data) return;
+      
+      let source: maptilersdk.GeoJSONSource | undefined;
+      let logPrefix = '';
+      
+      switch (layerType) {
+        case 'vessels':
+          source = map.current.getSource('vessels') as maptilersdk.GeoJSONSource | undefined;
+          logPrefix = '🚢';
+          break;
+        case 'aqi':
+          source = map.current.getSource('aqi') as maptilersdk.GeoJSONSource | undefined;
+          logPrefix = '💨';
+          break;
+        case 'waves':
+          source = map.current.getSource('waves') as maptilersdk.GeoJSONSource | undefined;
+          logPrefix = '🌊';
+          break;
+      }
+      
+      if (source) {
+        try {
+          source.setData(data);
+          console.log(`${logPrefix} ${layerType} updated: ${data.features?.length || 0} features`);
+        } catch (error) {
+          console.error(`Error updating ${layerType}:`, error);
+        }
+      }
+    };
+
+    // Process each request independently and update immediately when ready
+    fetchPromises.forEach((promise, index) => {
+      const layerType = fetchTypes[index];
+      promise
+        .then((data) => {
+          if (data && data.features) {
+            updateLayer(layerType, data);
+          }
+        })
+        .catch((error) => {
+          console.error(`❌ ${layerType} fetch failed:`, error);
+        });
+    });
+  }, []); // No dependencies - uses refs to get current values
 
   useEffect(() => {
     if (initialized.current) return;
@@ -172,12 +281,11 @@ const Map: FC = () => {
     map.current = new maptilersdk.Map({
       container: mapContainer.current!,
       style: `https://api.maptiler.com/maps/hybrid/style.json?key=${MAPTILER_KEY}`,
-      center: [78.9629, 15.0], // Indian Ocean focus
-      zoom: 5,
+      center: [30.0, 30.0], // More centered global view
+      zoom: 3, // Zoomed out to see more regions
       attributionControl: false
     });
 
-    // map.current.addControl(new maptilersdk.NavigationControl(), 'top-right');
     map.current.addControl(new maptilersdk.ScaleControl({ unit: 'metric' }), 'bottom-right');
     map.current.addControl(new maptilersdk.FullscreenControl(), 'top-right');
 
@@ -186,15 +294,16 @@ const Map: FC = () => {
       initializeLayers();
       setupInteractions();
       
-      // Fetch data immediately and on map movements
-      updateDataFromBackend();
-      
-      // Fetch data when map is moved/zoomed (debounced)
+      // Fetch data when map is moved/zoomed (debounced) - only for active layers
       const handleMapMove = () => {
         if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
         fetchTimeoutRef.current = setTimeout(() => {
-          updateDataFromBackend();
-        }, 500); // Debounce 500ms
+          // Only fetch if relevant layers are active (use ref to get current value)
+          const currentActiveLayers = activeLayersRef.current;
+          if (currentActiveLayers.includes('vessels') || currentActiveLayers.includes('aqi') || currentActiveLayers.includes('waves')) {
+            updateDataFromBackend();
+          }
+        }, 800); // Increased debounce to 800ms for slower connections
       };
 
       map.current!.on('moveend', handleMapMove);
@@ -207,11 +316,11 @@ const Map: FC = () => {
       if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
       if (map.current) map.current.remove();
     };
-  }, [updateDataFromBackend]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const initializeLayers = (): void => {
     // 1. VESSELS LAYER (initially empty, will be populated from backend)
-    // Use client-side clustering so many vessels render nicely
     map.current!.addSource('vessels', {
       type: 'geojson',
       data: {
@@ -223,7 +332,7 @@ const Map: FC = () => {
       clusterRadius: 50
     } as any);
 
-    // Cluster circles (aggregations)
+    // Cluster circles
     map.current!.addLayer({
       id: 'vessels-clusters',
       type: 'circle',
@@ -247,6 +356,9 @@ const Map: FC = () => {
         'circle-stroke-width': 1,
         'circle-stroke-color': '#ffffff',
         'circle-opacity': 0.85
+      },
+      layout: {
+        'visibility': 'none'
       }
     } as any);
 
@@ -259,14 +371,15 @@ const Map: FC = () => {
       layout: {
         'text-field': ['get', 'point_count'],
         'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
-        'text-size': 12
+        'text-size': 12,
+        'visibility': 'none'
       },
       paint: {
         'text-color': '#111111'
       }
     } as any);
 
-    // Unclustered points (individual vessels)
+    // Unclustered points
     map.current!.addLayer({
       id: 'vessels-unclustered',
       type: 'circle',
@@ -284,10 +397,13 @@ const Map: FC = () => {
         ],
         'circle-stroke-width': 1,
         'circle-stroke-color': '#ffffff'
+      },
+      layout: {
+        'visibility': 'none'
       }
     } as any);
 
-    // Vessel labels (for single points)
+    // Vessel labels
     map.current!.addLayer({
       id: 'vessels-labels',
       type: 'symbol',
@@ -391,7 +507,10 @@ const Map: FC = () => {
     // 3. WAVES HEATMAP
     map.current!.addSource('waves', {
       type: 'geojson',
-      data: mockWaves as unknown as WaveData
+      data: {
+        type: 'FeatureCollection',
+        features: []
+      }
     });
 
     map.current!.addLayer({
@@ -426,7 +545,7 @@ const Map: FC = () => {
       }
     } as any);
 
-    // 4. AQI LAYER (initially empty, will be populated from backend)
+    // 4. AQI LAYER (improved styling to match reference)
     map.current!.addSource('aqi', {
       type: 'geojson',
       data: {
@@ -435,21 +554,59 @@ const Map: FC = () => {
       }
     });
 
+    // AQI Heatmap layer
+    map.current!.addLayer({
+      id: 'aqi-heatmap',
+      type: 'heatmap',
+      source: 'aqi',
+      paint: {
+        'heatmap-weight': [
+          'interpolate',
+          ['linear'],
+          ['get', 'aqi'],
+          0, 0,
+          50, 0.2,
+          100, 0.5,
+          150, 0.7,
+          200, 0.9,
+          300, 1
+        ],
+        'heatmap-intensity': 1.5,
+        'heatmap-color': [
+          'interpolate',
+          ['linear'],
+          ['heatmap-density'],
+          0, 'rgba(46, 204, 113, 0)',
+          0.2, 'rgba(46, 204, 113, 0.6)',
+          0.4, 'rgba(241, 196, 15, 0.7)',
+          0.6, 'rgba(230, 126, 34, 0.8)',
+          0.8, 'rgba(231, 76, 60, 0.9)',
+          1, 'rgba(125, 5, 5, 1)'
+        ],
+        'heatmap-radius': 60,
+        'heatmap-opacity': 0.8
+      },
+      layout: {
+        'visibility': 'none'
+      }
+    } as any);
+
+    // AQI Circle layer - LARGER and more prominent like the reference image
     map.current!.addLayer({
       id: 'aqi-layer',
       type: 'circle',
       source: 'aqi',
       paint: {
-        // radius grows with AQI severity
         'circle-radius': [
           'interpolate',
           ['linear'],
           ['get', 'aqi'],
-          0, 6,
-          50, 10,
-          100, 14,
-          150, 18,
-          200, 22
+          0, 20,
+          50, 28,
+          100, 36,
+          150, 44,
+          200, 52,
+          300, 60
         ],
         'circle-color': [
           'step',
@@ -461,34 +618,36 @@ const Map: FC = () => {
           AQI_COLORS.VERY_UNHEALTHY, 300,
           AQI_COLORS.HAZARDOUS
         ],
-        'circle-opacity': 0.75,
-        'circle-stroke-width': 1,
-        'circle-stroke-color': '#222222'
+        'circle-opacity': 0.9,
+        'circle-stroke-width': 3,
+        'circle-stroke-color': '#ffffff',
+        'circle-stroke-opacity': 1
       },
       layout: {
         'visibility': 'none'
       }
     } as any);
 
-    // AQI value labels
+    // AQI value labels - Larger, bold text like the reference
     map.current!.addLayer({
       id: 'aqi-labels',
       type: 'symbol',
       source: 'aqi',
       layout: {
         'text-field': ['to-string', ['get', 'aqi']],
-        'text-size': 10,
+        'text-size': 16,
+        'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
         'text-anchor': 'center',
         'visibility': 'none'
       },
       paint: {
-        'text-color': '#ffffff',
-        'text-halo-color': '#000000',
-        'text-halo-width': 1
+        'text-color': '#000000',
+        'text-halo-color': '#ffffff',
+        'text-halo-width': 2
       }
     } as any);
 
-    // 5. WIND LAYER (OpenWeatherMap)
+    // 5. WIND LAYER
     const owmKey = (import.meta as any).env.VITE_OPENWEATHER_KEY || 'demo';
     map.current!.addSource('wind-tiles', {
       type: 'raster',
@@ -573,7 +732,7 @@ const Map: FC = () => {
       }
     } as any);
 
-    // 9. CLOUDS LAYER (Instead of humidity - more visual)
+    // 9. CLOUDS LAYER
     map.current!.addSource('clouds-tiles', {
       type: 'raster',
       tiles: [
@@ -594,7 +753,7 @@ const Map: FC = () => {
       }
     } as any);
 
-    // 10. RADAR LAYER (Precipitation intensity)
+    // 10. RADAR LAYER
     map.current!.addSource('radar-tiles', {
       type: 'raster',
       tiles: [
@@ -620,20 +779,20 @@ const Map: FC = () => {
 
   const setupInteractions = (): void => {
     // Hover effects for vessels
-    map.current!.on('mouseenter', 'vessels-layer', (e: maptilersdk.MapLayerMouseEvent) => {
+    map.current!.on('mouseenter', 'vessels-unclustered', (e: maptilersdk.MapLayerMouseEvent) => {
       map.current!.getCanvas().style.cursor = 'pointer';
       if (e.features && e.features.length > 0) {
         setHoveredFeature(e.features[0].properties);
       }
     });
 
-    map.current!.on('mouseleave', 'vessels-layer', () => {
+    map.current!.on('mouseleave', 'vessels-unclustered', () => {
       map.current!.getCanvas().style.cursor = '';
       setHoveredFeature(null);
     });
 
-    // Click for detailed popup
-    map.current!.on('click', 'vessels-layer', (e: maptilersdk.MapLayerMouseEvent) => {
+    // Click for detailed popup (unclustered vessels)
+    map.current!.on('click', 'vessels-unclustered', (e: maptilersdk.MapLayerMouseEvent) => {
       const feature = e.features![0];
       const coordinates = (feature.geometry as any).coordinates as [number, number];
       const props = feature.properties;
@@ -645,22 +804,39 @@ const Map: FC = () => {
         .setHTML(`
           <div style="padding: 8px; min-width: 200px;">
             <h3 style="margin: 0 0 8px 0; font-size: 14px; color: #2c3e50;">
-              🚢 ${props.vessel_name}
+              🚢 Vessel MMSI: ${props.mmsi || 'Unknown'}
             </h3>
             <div style="font-size: 12px; line-height: 1.6; color: #555;">
-              <strong>Type:</strong> ${props.type}<br/>
-              <strong>Speed:</strong> ${props.speed} knots<br/>
-              <strong>Course:</strong> ${props.course}°<br/>
-              <strong>Destination:</strong> ${props.destination}<br/>
-              <strong>ETA:</strong> ${new Date(props.eta).toLocaleString()}<br/>
-              <strong>Flag:</strong> ${props.flag}
+              <strong>Speed:</strong> ${props.speed || 0} knots<br/>
+              <strong>Course:</strong> ${props.course || 0}°<br/>
+              <strong>Latitude:</strong> ${props.lat?.toFixed(4) || 'N/A'}<br/>
+              <strong>Longitude:</strong> ${props.lon?.toFixed(4) || 'N/A'}<br/>
+              <strong>Last Updated:</strong> ${props.last_updated ? new Date(props.last_updated).toLocaleString() : 'N/A'}
             </div>
           </div>
         `)
         .addTo(map.current!);
     });
 
-    // Similar interactions for cyclones
+    // Click on vessel clusters to zoom in
+    map.current!.on('click', 'vessels-clusters', (e: maptilersdk.MapLayerMouseEvent) => {
+      const features = e.features!;
+      const clusterId = features[0].properties?.cluster_id;
+
+      if (clusterId && map.current) {
+        const source = map.current.getSource('vessels') as maptilersdk.GeoJSONSource;
+        (source as any).getClusterExpansionZoom(clusterId, (err: any, zoom: number) => {
+          if (err) return;
+
+          map.current!.easeTo({
+            center: (features[0].geometry as any).coordinates,
+            zoom: zoom
+          });
+        });
+      }
+    });
+
+    // Cyclones interactions
     map.current!.on('click', 'cyclones-layer', (e: maptilersdk.MapLayerMouseEvent) => {
       const feature = e.features![0];
       const coordinates = (feature.geometry as any).coordinates as [number, number];
@@ -695,17 +871,28 @@ const Map: FC = () => {
 
       if (popup.current) popup.current.remove();
 
+      const getAQIStatus = (aqi: number) => {
+        if (aqi <= 50) return { text: 'Good', color: AQI_COLORS.GOOD };
+        if (aqi <= 100) return { text: 'Moderate', color: AQI_COLORS.MODERATE };
+        if (aqi <= 150) return { text: 'Unhealthy for Sensitive Groups', color: AQI_COLORS.USG };
+        if (aqi <= 200) return { text: 'Unhealthy', color: AQI_COLORS.UNHEALTHY };
+        if (aqi <= 300) return { text: 'Very Unhealthy', color: AQI_COLORS.VERY_UNHEALTHY };
+        return { text: 'Hazardous', color: AQI_COLORS.HAZARDOUS };
+      };
+
+      const status = getAQIStatus(props.aqi);
+
       popup.current = new maptilersdk.Popup()
         .setLngLat(coordinates)
         .setHTML(`
           <div style="padding: 8px; min-width: 180px;">
             <h3 style="margin: 0 0 8px 0; font-size: 14px; color: #2c3e50;">
-              💨 ${props.city}
+              💨 ${props.name || 'AQI Station'}
             </h3>
             <div style="font-size: 12px; line-height: 1.6; color: #555;">
               <strong>AQI:</strong> ${props.aqi}<br/>
-              <strong>PM2.5:</strong> ${props.pm25} μg/m³<br/>
-              <strong>Category:</strong> ${props.category}
+              <strong>Status:</strong> <span style="color: ${status.color}">●</span> ${status.text}<br/>
+              <strong>Last Updated:</strong> ${props.last_updated || 'N/A'}
             </div>
           </div>
         `)
@@ -718,11 +905,22 @@ const Map: FC = () => {
 
     console.log('🔄 Toggle layer:', layerId);
 
+    // Handle base map style changes
+    if (layerId === 'satellite') {
+      setActiveLayers(prev => {
+        const isActive = prev.includes(layerId);
+        const newActiveLayers = isActive ? prev : [...prev, layerId];
+        activeLayersRef.current = newActiveLayers;
+        return newActiveLayers;
+      });
+      return;
+    }
+
     const layerMap: Record<string, string[]> = {
       'vessels': ['vessels-clusters', 'vessels-cluster-count', 'vessels-unclustered', 'vessels-labels'],
       'cyclones': ['cyclones-layer', 'cyclones-labels', 'cyclone-tracks-layer'],
       'waves': ['waves-heatmap'],
-      'aqi': ['aqi-layer', 'aqi-labels'],
+      'aqi': ['aqi-heatmap', 'aqi-layer', 'aqi-labels'],
       'wind': ['wind-layer'],
       'precipitation': ['precipitation-layer'],
       'temperature': ['temperature-layer'],
@@ -744,18 +942,27 @@ const Map: FC = () => {
       const newVisibility = isActive ? 'none' : 'visible';
 
       layers.forEach(layer => {
-        if (map.current!.getLayer(layer)) {
-          map.current!.setLayoutProperty(layer, 'visibility', newVisibility as 'visible' | 'none');
-          console.log(`  ${isActive ? '❌' : '✅'} ${layer}: ${newVisibility}`);
+        try {
+          if (map.current && map.current.getLayer(layer)) {
+            map.current.setLayoutProperty(layer, 'visibility', newVisibility as 'visible' | 'none');
+            console.log(`  ${isActive ? '❌' : '✅'} ${layer}: ${newVisibility}`);
+          }
+        } catch (error) {
+          console.error(`Error toggling layer ${layer}:`, error);
         }
       });
 
-      return isActive ? prev.filter(id => id !== layerId) : [...prev, layerId];
+      const newActiveLayers = isActive ? prev.filter(id => id !== layerId) : [...prev, layerId];
+      activeLayersRef.current = newActiveLayers;
+      return newActiveLayers;
     });
 
-    // When a data layer is turned on from the Sidebar, immediately fetch data for current bounds
-    if (!currentlyActive && (layerId === 'vessels' || layerId === 'aqi')) {
-      void updateDataFromBackend();
+    // Fetch data when layer is enabled
+    if (!currentlyActive && (layerId === 'vessels' || layerId === 'aqi' || layerId === 'waves')) {
+      console.log(`🔄 Layer ${layerId} enabled - fetching data...`);
+      setTimeout(() => {
+        void updateDataFromBackend();
+      }, 150);
     }
   };
 
@@ -765,8 +972,6 @@ const Map: FC = () => {
 
       {mapLoaded && (
         <>
-          {/* Sidebar controls handle layer visibility — extra quick buttons removed */}
-
           <Sidebar onLayerToggle={handleLayerToggle} activeLayers={activeLayers} />
           <Timeline onTimeChange={(time: any) => console.log('Time changed:', time)} />
           <InfoPanel
