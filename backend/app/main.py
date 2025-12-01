@@ -344,75 +344,6 @@ async def get_waves(
             wave_period = current.Variables(2).Value()
             swell_height = current.Variables(3).Value()
             
-            if wave_height is None: 
-                continue
-
-            features.append({
-                "type": "Feature",
-                "geometry": {
-                    "type": "Point",
-                    "coordinates": [float(lons[i]), float(lats[i])]
-                },
-                "properties": {
-                    "wave_height": round(wave_height, 2),
-                    "wave_direction": round(wave_dir, 0),
-                    "wave_period": round(wave_period, 1),
-                    "swell_wave_height": round(swell_height, 2),
-                    "condition": get_wave_intensity(wave_height)
-                }
-            })
-
-        result = {"type": "FeatureCollection", "features": features}
-        set_cached_data(cache_key, result, api_cache)
-        print(f"[WAVES] Cached {len(features)} points")
-        return result
-
-    except Exception as e:
-        print(f"[WAVES] API Error: {e}")
-        return {"type": "FeatureCollection", "features": []}
-
-@app.get("/api/waves")
-async def get_waves(
-    min_lat: float = Query(...), 
-    min_lon: float = Query(...),
-    max_lat: float = Query(...), 
-    max_lon: float = Query(...)
-):
-    """Get wave data grid with caching."""
-    cache_key = get_cache_key("waves", min_lat, min_lon, max_lat, max_lon)
-    cached = get_cached_data(cache_key, api_cache)
-    if cached:
-        print(f"[WAVES] Cache hit for bbox: {min_lat:.1f},{min_lon:.1f}")
-        return cached
-    
-    lats, lons = generate_grid(min_lat, min_lon, max_lat, max_lon, step=3.0)
-    
-    # Limit to 50 points for performance
-    max_points = 50
-    if len(lats) > max_points:
-        indices = np.linspace(0, len(lats)-1, max_points, dtype=int)
-        lats = lats[indices]
-        lons = lons[indices]
-        print(f"[WAVES] Sampled to {max_points} points")
-    
-    url = "https://marine-api.open-meteo.com/v1/marine"
-    params = {
-        "latitude": lats.tolist(),
-        "longitude": lons.tolist(),
-        "current": ["wave_height", "wave_direction", "wave_period", "swell_wave_height"],
-        "timezone": "auto"
-    }
-    try:
-        responses = openmeteo.weather_api(url, params=params)
-        features = []
-        for i, response in enumerate(responses):
-            current = response.Current()
-            
-            wave_height = current.Variables(0).Value()
-            wave_dir = current.Variables(1).Value()
-            wave_period = current.Variables(2).Value()
-            swell_height = current.Variables(3).Value()
-            
             # Skip invalid data points (None or NaN)
             if wave_height is None or np.isnan(wave_height):
                 continue
@@ -446,6 +377,41 @@ async def get_waves(
     except Exception as e:
         print(f"[WAVES] API Error: {e}")
         return {"type": "FeatureCollection", "features": []}
+
+@app.get("/api/wave-point")
+async def get_wave_point(
+    lat: float = Query(...), 
+    lon: float = Query(...)
+):
+    """Get wave data for single point."""
+    url = "https://marine-api.open-meteo.com/v1/marine"
+    params = {
+        "latitude": lat,
+        "longitude": lon,
+        "current": ["wave_height", "wave_direction", "wave_period", "swell_wave_height"],
+        "timezone": "auto"
+    }
+    
+    try:
+        responses = openmeteo.weather_api(url, params=params)
+        response = responses[0]
+        current = response.Current()
+        
+        wave_height = current.Variables(0).Value()
+        wave_dir = current.Variables(1).Value()
+        wave_period = current.Variables(2).Value()
+        swell_height = current.Variables(3).Value()
+        
+        return {
+            "wave_height": round(wave_height, 2) if wave_height else None,
+            "wave_direction": round(wave_dir, 0) if wave_dir else None,
+            "wave_period": round(wave_period, 1) if wave_period else None,
+            "swell_wave_height": round(swell_height, 2) if swell_height else None,
+            "condition": get_wave_intensity(wave_height) if wave_height else "Unknown"
+        }
+    except Exception as e:
+        print(f"[WAVE-POINT] Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn

@@ -845,6 +845,182 @@ const Map: FC = () => {
     map.current!.on('mouseleave', 'cyclones-layer', () => {
       map.current!.getCanvas().style.cursor = '';
     });
+
+    // Wave point analysis - Click anywhere on ocean to get wave conditions
+    map.current!.on('click', (e: maptilersdk.MapMouseEvent) => {
+      // Check if clicked on any existing feature
+      const features = map.current!.queryRenderedFeatures(e.point);
+      const clickedOnFeature = features.some(f => 
+        ['vessels-unclustered', 'vessels-clusters', 'aqi-circles', 'waves-points', 'cyclones-layer'].includes(f.layer.id)
+      );
+
+      // If clicked on a feature, don't analyze the ocean
+      if (clickedOnFeature) return;
+
+      const { lng, lat } = e.lngLat;
+
+      console.log(`[WAVE-POINT] Analyzing ocean at: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+
+      // Show loading popup
+      if (popup.current) popup.current.remove();
+
+      popup.current = new maptilersdk.Popup({ offset: 25, closeButton: true })
+        .setLngLat([lng, lat])
+        .setHTML(`
+          <div style="padding: 16px; min-width: 260px; background: linear-gradient(135deg, #1e3a5f 0%, #0a1929 100%); border-radius: 14px; border: 2px solid #0077be;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+              <div style="font-size: 32px;">🌊</div>
+              <div>
+                <h3 style="margin: 0; font-size: 16px; color: white; font-weight: bold;">Analyzing Ocean Conditions</h3>
+                <p style="margin: 2px 0 0 0; font-size: 11px; color: #64748b;">Please wait...</p>
+              </div>
+            </div>
+            <div style="text-align: center; padding: 20px;">
+              <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #0077be; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            </div>
+            <style>
+              @keyframes spin {
+                to { transform: rotate(360deg); }
+              }
+            </style>
+          </div>
+        `)
+        .addTo(map.current!);
+
+      // Fetch wave data from backend
+      fetch(`${BACKEND_API_URL}/api/wave-point?lat=${lat}&lon=${lng}`)
+        .then(res => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        })
+        .then(data => {
+          console.log(`[WAVE-POINT] Received data:`, data);
+
+          // Determine wave condition status and color
+          const getWaveStatus = (height: number) => {
+            if (height < 0.5) return { text: 'Calm', color: '#2ecc71', emoji: '😌', description: 'Perfect for all water activities' };
+            if (height < 1.25) return { text: 'Smooth', color: '#3498db', emoji: '😊', description: 'Ideal conditions for sailing' };
+            if (height < 2.5) return { text: 'Slight', color: '#1abc9c', emoji: '🌊', description: 'Good for experienced sailors' };
+            if (height < 4.0) return { text: 'Moderate', color: '#f39c12', emoji: '⚠️', description: 'Caution advised' };
+            if (height < 6.0) return { text: 'Rough', color: '#e67e22', emoji: '😰', description: 'Challenging conditions' };
+            if (height < 9.0) return { text: 'Very Rough', color: '#e74c3c', emoji: '🚨', description: 'Dangerous for small vessels' };
+            return { text: 'High', color: '#c0392b', emoji: '☠️', description: 'Extreme danger - avoid navigation' };
+          };
+
+          const waveHeight = data.wave_height || 0;
+          const status = getWaveStatus(waveHeight);
+
+          // Update popup with results
+          if (popup.current) popup.current.remove();
+
+          popup.current = new maptilersdk.Popup({ offset: 25, closeButton: true })
+            .setLngLat([lng, lat])
+            .setHTML(`
+              <div style="padding: 16px; min-width: 300px; background: linear-gradient(135deg, #1e3a5f 0%, #0a1929 100%); border-radius: 14px; border: 2px solid ${status.color};">
+                <!-- Header -->
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 2px solid rgba(255,255,255,0.1);">
+                  <div style="font-size: 36px;">${status.emoji}</div>
+                  <div>
+                    <h3 style="margin: 0; font-size: 17px; color: white; font-weight: bold;">Ocean Wave Analysis</h3>
+                    <p style="margin: 2px 0 0 0; font-size: 12px; color: #64748b;">Real-time marine conditions</p>
+                  </div>
+                </div>
+
+                <!-- Wave Height - Primary Metric -->
+                <div style="background: linear-gradient(135deg, ${status.color}30, ${status.color}10); border-radius: 10px; padding: 16px; margin-bottom: 14px; border: 2px solid ${status.color}50;">
+                  <div style="text-align: center;">
+                    <div style="font-size: 48px; font-weight: bold; color: ${status.color}; line-height: 1;">${waveHeight.toFixed(2)}m</div>
+                    <div style="font-size: 13px; color: #94a3b8; margin-top: 4px;">WAVE HEIGHT</div>
+                    <div style="margin-top: 8px; padding: 6px 12px; background: ${status.color}; color: white; border-radius: 6px; display: inline-block; font-weight: bold; font-size: 14px;">
+                      ${status.text}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Additional Wave Metrics -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
+                  <div style="background: rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; text-align: center;">
+                    <div style="font-size: 20px; font-weight: bold; color: #3498db;">${data.wave_direction || 0}°</div>
+                    <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">Direction</div>
+                  </div>
+                  <div style="background: rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; text-align: center;">
+                    <div style="font-size: 20px; font-weight: bold; color: #9b59b6;">${data.wave_period || 0}s</div>
+                    <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">Period</div>
+                  </div>
+                </div>
+
+                <!-- Swell Information -->
+                <div style="background: rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                  <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <span style="color: #94a3b8; font-size: 12px; font-weight: 600;">SWELL HEIGHT</span>
+                    <span style="font-size: 18px; font-weight: bold; color: #1abc9c;">${(data.swell_wave_height || 0).toFixed(2)}m</span>
+                  </div>
+                </div>
+
+                <!-- Condition Description -->
+                <div style="background: linear-gradient(90deg, ${status.color}20, ${status.color}40); border-left: 4px solid ${status.color}; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                  <div style="color: #cbd5e1; font-size: 12px; font-weight: 600; margin-bottom: 4px;">CONDITIONS</div>
+                  <p style="margin: 0; color: #e2e8f0; font-size: 13px; line-height: 1.5;">${status.description}</p>
+                </div>
+
+                <!-- Location Info -->
+                <div style="background: rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; margin-bottom: 10px;">
+                  <div style="color: #cbd5e1; font-size: 11px; font-weight: 600; margin-bottom: 6px;">📍 LOCATION</div>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-family: monospace;">
+                    <div>
+                      <div style="color: #64748b; font-size: 9px;">LAT</div>
+                      <div style="color: white; font-size: 12px;">${lat.toFixed(4)}°</div>
+                    </div>
+                    <div>
+                      <div style="color: #64748b; font-size: 9px;">LON</div>
+                      <div style="color: white; font-size: 12px;">${lng.toFixed(4)}°</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Footer -->
+                <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
+                  <span style="color: #64748b; font-size: 10px;">🕐 ${new Date().toLocaleTimeString()}</span>
+                  <span style="background: rgba(16,185,129,0.2); color: #10b981; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 600;">● LIVE DATA</span>
+                </div>
+              </div>
+            `)
+            .addTo(map.current!);
+
+          console.log(`[WAVE-POINT] ${status.text} conditions (${waveHeight}m waves)`);
+        })
+        .catch(error => {
+          console.error('[WAVE-POINT] Fetch error:', error);
+
+          // Show error popup
+          if (popup.current) popup.current.remove();
+
+          popup.current = new maptilersdk.Popup({ offset: 25, closeButton: true })
+            .setLngLat([lng, lat])
+            .setHTML(`
+              <div style="padding: 16px; min-width: 260px; background: linear-gradient(135deg, #1e3a5f 0%, #0a1929 100%); border-radius: 14px; border: 2px solid #e74c3c;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                  <div style="font-size: 32px;">❌</div>
+                  <div>
+                    <h3 style="margin: 0; font-size: 16px; color: white; font-weight: bold;">Analysis Failed</h3>
+                    <p style="margin: 2px 0 0 0; font-size: 11px; color: #64748b;">Could not fetch wave data</p>
+                  </div>
+                </div>
+                <div style="background: rgba(231,76,60,0.1); border-left: 4px solid #e74c3c; border-radius: 8px; padding: 12px;">
+                  <p style="margin: 0; color: #e2e8f0; font-size: 12px; line-height: 1.5;">
+                    Unable to retrieve wave conditions for this location. Please try again or check your connection.
+                  </p>
+                </div>
+                <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1);">
+                  <div style="color: #64748b; font-size: 10px; font-family: monospace;">
+                    📍 ${lat.toFixed(4)}°, ${lng.toFixed(4)}°
+                  </div>
+                </div>
+              </div>
+            `)
+            .addTo(map.current!);
+        });
+    });
   };
 
   const handleLayerToggle = (layerId: string): void => {

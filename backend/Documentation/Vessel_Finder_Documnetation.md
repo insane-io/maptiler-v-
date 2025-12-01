@@ -1,28 +1,24 @@
-**Vessel Locator**
+# Vessel Tracking API Documentation
 
-1. Vessel Locator API
-    - VesselFinder API does not have a standard "1000 requests/day" free tier for its direct API. Fetching data is paid. 
-    - Free Tier is of embedded map widgets (basically the iframe)
-    - As of now using *aisstream.io*
-    - **Drawbacks**
-      - Does not cover a lot of regions
+## API Source
+- **Provider:** AISStream.io (WebSocket)
+- **Endpoint:** `wss://stream.aisstream.io/v0/stream`
+- **Cost:** FREE (limited regions)
+- **Type:** Real-time AIS streaming
 
-![Vessel Finder Image](Assets/image.png)
+## How It Works
+- WebSocket connects on server startup
+- Streams vessel positions to in-memory cache
+- Stale data removed after 30 minutes
+- 4 monitored regions: Atlantic, Europe, Pacific Asia, Indian Ocean
 
-***Notes***
+## Backend Endpoint
+```
+GET /api/vessels?min_lat={lat}&min_lon={lon}&max_lat={lat}&max_lon={lon}
+```
 
-- *When going prod*: 
-    - Instead of streaming data 24/7 (which burns credits), you design your backend to be "lazy":
-    - Don't Poll Everything: Do not ask for "All ships in Mumbai" every 30 seconds.
-    - On-Demand Polling: Only fetch data when a user is actually looking at the map.
-    - Caching:
-        Scenario: User A opens the map of Mumbai. You pay 1 credit to fetch ships.
-        Optimization: Save that data in your database (Redis/PostgreSQL) for 2 minutes.
-        Scenario: User B opens the map 10 seconds later. Do not call the API. Serve them the data from User A.
-        Result: You serve 1,000 users but only pay for 1 API call every 2 minutes.
-
-Endpoint: 
-Sample Res: 
+## Response Format
+```json
 {
   "type": "FeatureCollection",
   "features": [
@@ -32,35 +28,37 @@ Sample Res:
         "mmsi": 244012012,
         "speed": 6.3,
         "course": 157.7,
-        "lat": 51.69773333333333,
-        "lon": 4.610203333333333,
-        "last_updated": "2025-11-27T17:07:51.656962+00:00"
+        "lat": 51.697,
+        "lon": 4.610,
+        "last_updated": "2025-11-27T17:07:51Z"
       },
       "geometry": {
         "type": "Point",
-        "coordinates": [
-          4.610203333333333,
-          51.69773333333333
-        ]
+        "coordinates": [4.610, 51.697]
       }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "mmsi": 211559990,
-        "speed": 0,
-        "course": 359,
-        "lat": 53.52193666666667,
-        "lon": 9.931466666666667,
-        "last_updated": "2025-11-27T17:07:51.659452+00:00"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          9.931466666666667,
-          53.52193666666667
-        ]
-      }
-    },
+    }
   ]
 }
+```
+
+## Response Fields
+| Field | Type | Description |
+|-------|------|-------------|
+| `mmsi` | int | Unique vessel ID |
+| `speed` | float | Speed in knots |
+| `course` | float | Direction (0-359°) |
+| `lat/lon` | float | Position |
+| `last_updated` | string | Timestamp |
+
+## Paid Alternatives
+| Provider | Cost/mo | Key Feature |
+|----------|---------|-------------|
+| MarineTraffic | $99-999 | Global + metadata |
+| VesselFinder | €200-2000 | Ship details + ports |
+| Spire Maritime | $500-5000 | Satellite coverage |
+
+## Production Notes
+- Use Redis cache for multi-instance support
+- Implement per-user rate limiting
+- Debounce viewport changes (500ms)
+- Cache results for 2 minutes per bbox
