@@ -1,0 +1,23 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {"type": "Feature", "properties": {"wave_height": 1.2}, "geometry": {"type": "Point", "coordinates": [70, 15]}},
+    {"type": "Feature", "properties": {"wave_height": 2.5}, "geometry": {"type": "Point", "coordinates": [72, 15]}},
+    {"type": "Feature", "properties": {"wave_height": 3.8}, "geometry": {"type": "Point", "coordinates": [74, 15]}},
+    {"type": "Feature", "properties": {"wave_height": 4.2}, "geometry": {"type": "Point", "coordinates": [76, 15]}},
+    {"type": "Feature", "properties": {"wave_height": 2.1}, "geometry": {"type": "Point", "coordinates": [78, 15]}},
+    {"type": "Feature", "properties": {"wave_height": 1.5}, "geometry": {"type": "Point", "coordinates": [80, 15]}},
+    {"type": "Feature", "properties": {"wave_height": 1.8}, "geometry": {"type": "Point", "coordinates": [70, 17]}},
+    {"type": "Feature", "properties": {"wave_height": 2.9}, "geometry": {"type": "Point", "coordinates": [72, 17]}},
+    {"type": "Feature", "properties": {"wave_height": 4.5}, "geometry": {"type": "Point", "coordinates": [74, 17]}},
+    {"type": "Feature", "properties": {"wave_height": 5.2}, "geometry": {"type": "Point", "coordinates": [76, 17]}},
+    {"type": "Feature", "properties": {"wave_height": 3.3}, "geometry": {"type": "Point", "coordinates": [78, 17]}},
+    {"type": "Feature", "properties": {"wave_height": 2.0}, "geometry": {"type": "Point", "coordinates": [80, 17]}},
+    {"type": "Feature", "properties": {"wave_height": 2.2}, "geometry": {"type": "Point", "coordinates": [70, 19]}},
+    {"type": "Feature", "properties": {"wave_height": 3.5}, "geometry": {"type": "Point", "coordinates": [72, 19]}},
+    {"type": "Feature", "properties": {"wave_height": 4.8}, "geometry": {"type": "Point", "coordinates": [74, 19]}},
+    {"type": "Feature", "properties": {"wave_height": 3.9}, "geometry": {"type": "Point", "coordinates": [76, 19]}},
+    {"type": "Feature", "properties": {"wave_height": 2.7}, "geometry": {"type": "Point", "coordinates": [78, 19]}},
+    {"type": "Feature", "properties": {"wave_height": 1.9}, "geometry": {"type": "Point", "coordinates": [80, 19]}}
+  ]
+}

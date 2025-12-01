@@ -1,0 +1,44 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "aqi": 156,
+        "pm25": 65,
+        "city": "Mumbai",
+        "category": "Unhealthy for Sensitive Groups"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [72.88, 19.08]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "aqi": 89,
+        "pm25": 32,
+        "city": "Kochi",
+        "category": "Moderate"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [76.27, 9.93]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "aqi": 178,
+        "pm25": 85,
+        "city": "Chennai",
+        "category": "Unhealthy"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [80.27, 13.08]
+      }
+    }
+  ]
+}

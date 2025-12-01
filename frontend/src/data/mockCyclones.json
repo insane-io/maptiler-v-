@@ -1,0 +1,21 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Cyclone MIDHILI",
+        "category": 3,
+        "wind_speed": 195,
+        "pressure": 920,
+        "movement": "WNW at 25 km/h",
+        "forecast_track": true,
+        "intensity": "Severe Cyclonic Storm"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [88.5, 17.3]
+      }
+    }
+  ]
+}
