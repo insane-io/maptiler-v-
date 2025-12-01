@@ -104,6 +104,45 @@ const fetchAQIFromBackend = async (
   }
 };
 
+/**
+ * Fetch cyclones from backend API for a given bounding box
+ * (loaded on-demand when the user enables the Cyclones layer)
+ */
+const fetchCyclonesFromBackend = async (
+  minLat: number,
+  minLon: number,
+  maxLat: number,
+  maxLon: number
+): Promise<GeoJSONFeatureCollection | null> => {
+  try {
+    const params = new URLSearchParams({
+      min_lat: minLat.toString(),
+      min_lon: minLon.toString(),
+      max_lat: maxLat.toString(),
+      max_lon: maxLon.toString(),
+    });
+
+    const response = await fetch(`${BACKEND_API_URL}/api/cyclones?${params}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (!response.ok) {
+      console.warn(`Backend Cyclones API error: ${response.status}`);
+      // fall back to mock data
+      return mockCyclones as unknown as GeoJSONFeatureCollection;
+    }
+
+    const data = await response.json();
+    console.log(`✅ Fetched ${data.features?.length ?? 0} cyclones from backend`);
+    return data;
+  } catch (error) {
+    console.error('❌ Failed to fetch cyclones from backend:', error);
+    console.log('⚠️ Using mock cyclones data');
+    return mockCyclones as unknown as GeoJSONFeatureCollection;
+  }
+};
+
 const Map: FC = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maptilersdk.Map | null>(null);
@@ -308,9 +347,13 @@ const Map: FC = () => {
     } as any);
 
     // 2. CYCLONES LAYER
+    // Initialize source empty — DO NOT preload cyclones here (we load on-demand)
     map.current!.addSource('cyclones', {
       type: 'geojson',
-      data: mockCyclones as unknown as CycloneData
+      data: {
+        type: 'FeatureCollection',
+        features: []
+      }
     });
 
     map.current!.addLayer({
@@ -357,7 +400,7 @@ const Map: FC = () => {
       }
     } as any);
 
-    // Cyclone tracks
+    // Cyclone tracks (we keep mock tracks as-is)
     map.current!.addSource('cyclone-tracks', {
       type: 'geojson',
       data: mockCycloneTracks as unknown as CycloneTrackData
@@ -756,6 +799,27 @@ const Map: FC = () => {
     // When a data layer is turned on from the Sidebar, immediately fetch data for current bounds
     if (!currentlyActive && (layerId === 'vessels' || layerId === 'aqi')) {
       void updateDataFromBackend();
+    }
+
+    // NEW: Load cyclones on-demand when the user turns the cyclones layer ON
+    if (!currentlyActive && layerId === 'cyclones') {
+      const bounds = map.current.getBounds();
+      if (!bounds) return;
+      const minLat = bounds.getSouth();
+      const minLon = bounds.getWest();
+      const maxLat = bounds.getNorth();
+      const maxLon = bounds.getEast();
+
+      void (async () => {
+        const cyclones = await fetchCyclonesFromBackend(minLat, minLon, maxLat, maxLon);
+        if (cyclones && map.current) {
+          const src = map.current.getSource('cyclones') as maptilersdk.GeoJSONSource | undefined;
+          if (src && typeof src.setData === 'function') {
+            src.setData(cyclones);
+            console.log(`🌀 Cyclones source updated with ${cyclones.features.length} features`);
+          }
+        }
+      })();
     }
   };
 
