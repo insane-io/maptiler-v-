@@ -1,0 +1,29 @@
+repos:
+  # 1. BLACK HOOK
+  - repo: https://github.com/psf/black
+    rev: 24.2.0  # The specific version of Black to use (locks it for the whole team)
+    hooks:
+      - id: black  # The command to run
+
+  # 2. ISORT HOOK
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+
+  # 3. MYPY HOOK
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.8.0
+    hooks:
+      - id: mypy
+        # CRITICAL: Mypy runs in an isolated sandbox. It doesn't see your 'pip install'.
+        # We must explicitly list packages here so Mypy knows what 'requests' or 'yaml' are.
+        additional_dependencies: [types-requests, types-PyYAML, types-python-dateutil]
+
+  # 4. PYLINT HOOK
+  - repo: https://github.com/pycqa/pylint
+    rev: v3.0.3
+    hooks:
+      - id: pylint
+        # Tells Pylint explicitly where to find the config file we just wrote.
+        args: [--rcfile=backend/pyproject.toml]
