@@ -1,0 +1,11 @@
+# not to be included in production
+
+black
+isort
+mypy
+pylint
+pre-commit
+types-requests
+types-PyYAML
+types-python-dateutil
+
