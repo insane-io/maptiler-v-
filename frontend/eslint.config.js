@@ -1,15 +1,15 @@
-import js from '@eslint/js'
-import globals from 'globals'
-import reactHooks from 'eslint-plugin-react-hooks'
-import reactRefresh from 'eslint-plugin-react-refresh'
-import tseslint from 'typescript-eslint'
-import prettierConfig from 'eslint-config-prettier'
-import SimpleImportSort from 'eslint-plugin-simple-import-sort'
-import prettier from 'eslint-plugin-prettier'
-import jsxA11y from 'eslint-plugin-jsx-a11y'
+import js from '@eslint/js';
+import prettierConfig from 'eslint-config-prettier';
+import jsxA11y from 'eslint-plugin-jsx-a11y';
+import prettier from 'eslint-plugin-prettier';
+import reactHooks from 'eslint-plugin-react-hooks';
+import reactRefresh from 'eslint-plugin-react-refresh';
+import SimpleImportSort from 'eslint-plugin-simple-import-sort';
+import globals from 'globals';
+import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores : ['dist/**', 'node_modules/**'] },
+  { ignores: ['dist/**', 'node_modules/**'] },
   {
     files: ['**/*.{ts,tsx,js,jsx}'],
 
@@ -20,7 +20,7 @@ export default tseslint.config(
       reactRefresh.configs.vite,
 
       ...tseslint.configs.recommended,
-      prettierConfig
+      prettierConfig,
     ],
 
     languageOptions: {
@@ -34,31 +34,34 @@ export default tseslint.config(
       },
     },
 
-    plugins:{
-      'simple-import-sort':SimpleImportSort,
-      prettier : prettier,
-      'jus-a11y': jsxA11y
+    plugins: {
+      'simple-import-sort': SimpleImportSort,
+      prettier: prettier,
+      'jsx-a11y': jsxA11y,
     },
     rules: {
       // Enable standard a11y rules
       ...jsxA11y.configs.recommended.rules,
-      
-      // react and react-refresg rules 
+
+      // react and react-refresg rules
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': [
         'warn',
-        {allowConstantExport: true},
+        { allowConstantExport: true },
       ],
 
       // prettier rules
       'prettier/prettier': 'warn',
 
-      // simple-import-sort rules 
+      // simple-import-sort rules
       'simple-import-sort/imports': 'error',
       'simple-import-sort/exports': 'error',
 
       //custome rules
-      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        { argsIgnorePattern: '^_' },
+      ],
       curly: 'warn',
       'no-alert': 'error', // Uses string 'error', not console.error
       'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off', // Smart console handling
@@ -66,12 +69,12 @@ export default tseslint.config(
       'no-undef': 'off', // TS handles this better than ESLint
     },
   },
-  //to ensure that .ts rules not get applied to .js 
+  //to ensure that .ts rules not get applied to .js
   {
-    files:['**/*.{js,jsx}'],
+    files: ['**/*.{js,jsx}'],
     rules: {
       '@typescript-eslint/no-unused-vars': 'off', // Turn off TS rule for JS
       'no-unused-vars': 'warn', // Use standard JS rule
     },
   }
-)
+);

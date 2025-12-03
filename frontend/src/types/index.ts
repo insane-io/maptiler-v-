@@ -28,7 +28,9 @@ export interface GeoJSONFeature<G extends GeoJSONGeometry = GeoJSONGeometry> {
   properties: GeoJSONProperties;
 }
 
-export interface GeoJSONFeatureCollection<G extends GeoJSONGeometry = GeoJSONGeometry> {
+export interface GeoJSONFeatureCollection<
+  G extends GeoJSONGeometry = GeoJSONGeometry,
+> {
   type: 'FeatureCollection';
   features: GeoJSONFeature<G>[];
 }

@@ -1,13 +1,13 @@
 import type {
-  VesselData,
-  CycloneData,
-  CycloneTrackData,
-  WaveData,
   AQIData,
-  VesselProperties,
-  CycloneProperties,
-  WaveProperties,
   AQIProperties,
+  CycloneData,
+  CycloneProperties,
+  CycloneTrackData,
+  VesselData,
+  VesselProperties,
+  WaveData,
+  WaveProperties,
 } from '../types';
 
 /**
@@ -53,7 +53,9 @@ export function processCycloneData(rawData: CycloneData): CycloneData {
 /**
  * Process and validate cyclone track data
  */
-export function processCycloneTrackData(rawData: CycloneTrackData): CycloneTrackData {
+export function processCycloneTrackData(
+  rawData: CycloneTrackData
+): CycloneTrackData {
   if (!rawData.features || !Array.isArray(rawData.features)) {
     console.warn('⚠️ Invalid cyclone track data structure');
     return { type: 'FeatureCollection', features: [] };
@@ -115,7 +117,9 @@ export function processAQIData(rawData: AQIData): AQIData {
 /**
  * Enrich vessel properties with calculated fields
  */
-export function enrichVesselProperties(props: VesselProperties): VesselProperties {
+export function enrichVesselProperties(
+  props: VesselProperties
+): VesselProperties {
   return {
     ...props,
     speed: Math.round((props.speed as number) * 100) / 100,
@@ -125,7 +129,9 @@ export function enrichVesselProperties(props: VesselProperties): VesselPropertie
 /**
  * Enrich cyclone properties with calculated fields
  */
-export function enrichCycloneProperties(props: CycloneProperties): CycloneProperties {
+export function enrichCycloneProperties(
+  props: CycloneProperties
+): CycloneProperties {
   return {
     ...props,
     wind_speed: Math.round((props.wind_speed as number) * 10) / 10,

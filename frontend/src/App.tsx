@@ -1,5 +1,6 @@
-import React from 'react'
-import Map from './components/Map'
+import React from 'react';
+
+import Map from './components/Map';
 // import './App.css'
 
 const App: React.FC = () => {
@@ -7,7 +8,7 @@ const App: React.FC = () => {
     <div className="app">
       <Map />
     </div>
-  )
-}
+  );
+};
 
-export default App
+export default App;
