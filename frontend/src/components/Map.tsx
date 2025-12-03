@@ -6,6 +6,7 @@ import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
 import type { GeoJSONFeatureCollection, GeoJSONProperties } from '../types';
 import { AQI_COLORS, MAPTILER_KEY } from '../utils/constants';
 import InfoPanel from './InfoPanel';
+import LoadingScreen from './LoadingScreen';
 import Sidebar from './Sidebar';
 import Timeline from './Timeline';
 
@@ -105,6 +106,54 @@ const Map: FC = () => {
   const [mapCenter, setMapCenter] = useState<
     { lng: number; lat: number } | undefined
   >(undefined);
+  const initializedWeatherLayers = useRef<Set<string>>(new Set());
+
+  // Helper function to get weather layer color
+  const getWeatherColor = (layerId: string): string => {
+    const colors: Record<string, string> = {
+      wind: '#3498db',
+      precipitation: '#2ecc71',
+      temperature: '#e74c3c',
+      pressure: '#9b59b6',
+      humidity: '#f39c12',
+      radar: '#1abc9c',
+    };
+    return colors[layerId] || '#95a5a6';
+  };
+
+  // Lazy initialization function for weather layers
+  const initializeWeatherLayer = useCallback((layerId: string): void => {
+    if (!map.current || initializedWeatherLayers.current.has(layerId)) {
+      return;
+    }
+
+    const layerName = `${layerId}-layer`;
+    const color = getWeatherColor(layerId);
+
+    // Add GeoJSON source
+    map.current.addSource(layerId, {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] },
+    });
+
+    // Add circle layer
+    map.current.addLayer({
+      id: layerName,
+      type: 'circle',
+      source: layerId,
+      paint: {
+        'circle-radius': 8,
+        'circle-color': color,
+        'circle-stroke-width': 2,
+        'circle-stroke-color': '#ffffff',
+        'circle-opacity': 0.8,
+      },
+      layout: { visibility: 'none' },
+    });
+
+    initializedWeatherLayers.current.add(layerId);
+    console.log(`[WEATHER] Initialized ${layerId} layer`);
+  }, []);
 
   // Unified data update function - same approach for vessels, AQI, and waves
   const updateDataFromBackend = useCallback(async (): Promise<void> => {
@@ -139,6 +188,30 @@ const Map: FC = () => {
     }
     if (currentActiveLayers.includes('waves')) {
       dataRequests.push({ endpoint: '/api/waves', sourceId: 'waves' });
+    }
+    if (currentActiveLayers.includes('wind')) {
+      dataRequests.push({ endpoint: '/api/wind', sourceId: 'wind' });
+    }
+    if (currentActiveLayers.includes('precipitation')) {
+      dataRequests.push({
+        endpoint: '/api/precipitation',
+        sourceId: 'precipitation',
+      });
+    }
+    if (currentActiveLayers.includes('temperature')) {
+      dataRequests.push({
+        endpoint: '/api/temperature',
+        sourceId: 'temperature',
+      });
+    }
+    if (currentActiveLayers.includes('pressure')) {
+      dataRequests.push({ endpoint: '/api/pressure', sourceId: 'pressure' });
+    }
+    if (currentActiveLayers.includes('humidity')) {
+      dataRequests.push({ endpoint: '/api/humidity', sourceId: 'humidity' });
+    }
+    if (currentActiveLayers.includes('radar')) {
+      dataRequests.push({ endpoint: '/api/radar', sourceId: 'radar' });
     }
 
     if (dataRequests.length === 0) {
@@ -359,13 +432,6 @@ const Map: FC = () => {
           '#95a5a6',
         ],
         'line-width': 2,
-        'line-dasharray': [
-          'match',
-          ['get', 'track_type'],
-          'forecast',
-          ['literal', [2, 2]],
-          ['literal', [1, 0]],
-        ],
       },
       layout: {
         visibility: 'none',
@@ -557,36 +623,7 @@ const Map: FC = () => {
       },
     });
 
-    // 4. WEATHER LAYERS - OpenWeatherMap tiles
-    const owmKey =
-      (import.meta as unknown as { env: { VITE_OPENWEATHER_KEY?: string } }).env
-        .VITE_OPENWEATHER_KEY || 'demo';
-    const weatherLayers = [
-      { id: 'wind-layer', url: 'wind_new', opacity: 0.6 },
-      { id: 'precipitation-layer', url: 'precipitation_new', opacity: 0.7 },
-      { id: 'temperature-layer', url: 'temp_new', opacity: 0.6 },
-      { id: 'pressure-layer', url: 'pressure_new', opacity: 0.5 },
-      { id: 'humidity-layer', url: 'clouds_new', opacity: 0.6 },
-      { id: 'radar-layer', url: 'precipitation_new', opacity: 0.8 },
-    ];
-
-    weatherLayers.forEach((layer) => {
-      map.current!.addSource(`${layer.id}-tiles`, {
-        type: 'raster',
-        tiles: [
-          `https://tile.openweathermap.org/map/${layer.url}/{z}/{x}/{y}.png?appid=${owmKey}`,
-        ],
-        tileSize: 256,
-      });
-
-      map.current!.addLayer({
-        id: layer.id,
-        type: 'raster',
-        source: `${layer.id}-tiles`,
-        paint: { 'raster-opacity': layer.opacity },
-        layout: { visibility: 'none' },
-      });
-    });
+    // Weather layers will be initialized lazily when first toggled
 
     console.log('[MAP] All layers initialized');
   }, []);
@@ -1260,11 +1297,11 @@ const Map: FC = () => {
       // Set initial center
       setMapCenter(map.current!.getCenter());
 
-      // Initial data fetch after map loads
+      // Initial data fetch after map loads - reduced delay for faster loading
       setTimeout(() => {
         console.log('[MAP] Fetching initial data...');
         void updateDataFromBackend();
-      }, 500);
+      }, 200);
 
       // Debounced updates on map movement
       const handleMapMove = () => {
@@ -1376,10 +1413,33 @@ const Map: FC = () => {
       return newActiveLayers;
     });
 
+    // Initialize weather layers lazily when first toggled on
+    if (
+      !currentlyActive &&
+      [
+        'wind',
+        'precipitation',
+        'temperature',
+        'pressure',
+        'humidity',
+        'radar',
+      ].includes(layerId)
+    ) {
+      initializeWeatherLayer(layerId);
+    }
+
     // Fetch data immediately when layer is enabled
     if (
       !currentlyActive &&
-      (layerId === 'vessels' || layerId === 'aqi' || layerId === 'waves')
+      (layerId === 'vessels' ||
+        layerId === 'aqi' ||
+        layerId === 'waves' ||
+        layerId === 'wind' ||
+        layerId === 'precipitation' ||
+        layerId === 'temperature' ||
+        layerId === 'pressure' ||
+        layerId === 'humidity' ||
+        layerId === 'radar')
     ) {
       console.log(`[LAYER] ${layerId} enabled - fetching data...`);
       setTimeout(() => {
@@ -1429,6 +1489,8 @@ const Map: FC = () => {
         background: '#0a1929',
       }}
     >
+      {!mapLoaded && <LoadingScreen />}
+
       <div
         ref={mapContainer}
         style={{ width: '100%', height: '100%' }}
