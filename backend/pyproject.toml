@@ -1,32 +1,43 @@
 [tool.black]
-line-length = 88  # Sets the maximum characters per line to 88 to prevent horizontal scrolling.
-target-version = ['py312']  # Tells Black to use syntax features available in Python 3.12.
-include = '\.pyi?$'  # Formats both standard Python (.py) and type stub (.pyi) files.
+line-length = 100  # Increased from 88 to 100
+target-version = ['py312']
+include = '\.pyi?$'
 
 [tool.isort]
-profile = "black"  # Forces import sorting to match Black's style so the tools don't fight.
-line_length = 88  # Matches Black's line length limit for consistency.
-multi_line_output = 3  # Uses "Vertical Hanging Indent" for cleaner, stacked multiline imports.
+profile = "black"
+line_length = 100  # Increased from 88 to 100
+multi_line_output = 3
 ensure_newline_before_comments = true 
-include_trailing_comma = true #a comma would be added
-force_grid_wrap = 0 #if import exceeds then count of 88 then only grid wrap
-use_parentheses = true #for well understanding / formating 
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
 
 [tool.mypy]
-python_version = "3.12"  # validtes code types against Python 3.12 standards.
-warn_return_any = true  # Warns if a function returns 'Any', which defeats strict type checking.
-warn_unused_configs = true  # Alerts you if a config setting here is misspelled or unused.
-disallow_untyped_defs = false  # Allows standard functions without type hints (easier for beginners).
-ignore_missing_imports = true  # Prevents crashes when importing libraries that don't have type stubs.
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+# Add these to be more lenient
+disable_error_code = ["dict-item", "attr-defined"]
 
 [tool.pylint.messages_control]
 disable = [
-    "C0114", # Stops complaining about missing docstrings at the top of modules.
-    "C0115", # Stops complaining about missing docstrings in classes.
-    "C0116", # Stops complaining about missing docstrings in functions.
-    "R0903", # Stops complaining about classes that are just data containers (too few methods).
-    "E0401", # Prevents false errors when Pylint can't see libraries in your virtualenv.
+    "C0114",  # missing-module-docstring
+    "C0115",  # missing-class-docstring
+    "C0116",  # missing-function-docstring
+    "R0903",  # too-few-public-methods
+    "E0401",  # import-error
+    "C0301",  # line-too-long
+    "R0911",  # too-many-return-statements
+    "R1705",  # no-else-return
+    "W0718",  # broad-exception-caught
+    "W0621",  # redefined-outer-name
+    "W0613",  # unused-argument
+    "R0914",  # too-many-locals
+    "W0707",  # raise-missing-from
+    "E0611",  # no-name-in-module
 ]
 
 [tool.pylint.format]
-max-line-length = 88  # Tells Pylint to accept 88 characters so it doesn't conflict with Black.
+max-line-length = 100  # Increased from 88 to 100

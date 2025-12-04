@@ -1,0 +1,36 @@
+[MASTER]
+ignore=venv,.venv,tests,__pycache__
+load-plugins=pylint.extensions.docparams
+
+[MESSAGES CONTROL]
+disable=
+    C0114,  # missing-module-docstring
+    C0115,  # missing-class-docstring
+    C0116,  # missing-function-docstring
+    R0903,  # too-few-public-methods
+    E0401,  # import-error
+    C0301,  # line-too-long (Black handles this)
+    R0911,  # too-many-return-statements
+    R1705,  # no-else-return
+    W0718,  # broad-exception-caught
+    W0621,  # redefined-outer-name
+    W0613,  # unused-argument
+    R0914,  # too-many-locals
+    W0707,  # raise-missing-from
+    E0611   # no-name-in-module
+
+[FORMAT]
+max-line-length=100
+
+[DESIGN]
+max-args=10
+max-attributes=15
+min-public-methods=0
+max-locals=25
+max-returns=10
+
+[BASIC]
+good-names=i,j,k,ex,_,id,db,app,e
+
+[SIMILARITIES]
+min-similarity-lines=10

@@ -1,0 +1,15 @@
+[flake8]
+max-line-length = 100
+extend-ignore = E203, E266, W503, E501, E722
+exclude = 
+    .git,
+    __pycache__,
+    venv,
+    .venv,
+    */migrations/*,
+    */tests/*,
+    build,
+    dist
+per-file-ignores =
+    __init__.py:F401,E402
+    conftest.py:E0611

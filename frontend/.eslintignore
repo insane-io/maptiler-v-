@@ -1,0 +1,20 @@
+# Dependencies
+node_modules
+
+# Build outputs
+build
+dist
+coverage
+
+# Public assets
+public
+
+# Service workers
+serviceWorker.js
+service-worker.js
+
+# Config files
+*.config.js
+
+# Minified
+*.min.js

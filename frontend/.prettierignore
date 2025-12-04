@@ -1,0 +1,27 @@
+# Dependencies
+node_modules
+
+# Build outputs
+build
+dist
+.cache
+
+# Testing
+coverage
+
+# Public files (generated)
+public
+
+# Minified files
+*.min.js
+*.min.css
+
+# Package manager
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Environment
+.env
+.env.local
+.env.*.local
