@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  # Backend service (development mode with hot reload)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: maptiler-backend-dev
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount source code for hot reload
+      - ./backend/app:/app/app:ro
+      - ./backend/.env:/app/.env:ro
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=True
+    restart: unless-stopped
+    networks:
+      - maptiler-network
+
+  # Frontend service (development mode with hot reload)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: maptiler-frontend-dev
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount source code for hot reload
+      - ./frontend/src:/app/src:ro
+      - ./frontend/public:/app/public:ro
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - maptiler-network
+    stdin_open: true
+    tty: true
+
+networks:
+  maptiler-network:
+    driver: bridge

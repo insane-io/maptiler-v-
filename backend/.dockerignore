@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+*.cover
+reports/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+Documentation/
+*.md
+docs/
+
+# Linting & formatting
+.flake8
+.pylintrc
+.bandit
+mypy.ini
+.pre-commit-config.yaml
+
+# Dev tools
+Makefile
+
+# Logs
+*.log
+
+# Cache
+.cache/
+*.sqlite
+.mypy_cache/
+
+# Environment files (copy manually, don't include in image)
+.env
+.env.*

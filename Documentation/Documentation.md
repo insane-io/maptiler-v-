@@ -174,3 +174,89 @@ Your Code (app/)
     ↓
 Code is clean, tested, and secure!
 ```
+
+## Test the Root Makefile
+cd ~/projects/maptiler-v-
+
+# See all available commands
+make help
+
+# Test a simple command
+make format
+
+# Run complete QA
+make qa
+
+---
+
+# Quick Commands
+make help           # Show all commands
+make install        # Install everything
+make format         # Format all code
+make lint          # Lint everything
+make test          # Test everything
+make qa            # Run complete QA suite
+make build         # Build frontend
+
+
+# Maintenance
+make clean         # Clean artifacts
+make clean-all     # Deep clean
+
+
+
+
+
+
+
+
+
+## Development Mode 
+
+# Build development images (with hot reload)
+make docker-build-dev
+
+# Start containers
+make docker-up-dev
+
+# Wait for containers to start
+sleep 15
+
+# Check status
+make docker-ps
+
+# View logs
+make docker-logs
+
+
+## Production Mode
+
+# Build production images (optimized)
+make docker-build
+
+# Start containers
+make docker-up
+
+# Check status
+make docker-ps
+
+# View logs
+make docker-logs
+
+
+## Health Check Commands
+
+# Test backend
+curl http://localhost:8000/health
+
+# Test frontend
+curl http://localhost:3000  # dev mode
+# or
+curl http://localhost       # production mode
+
+# Check container status
+docker ps
+
+# View specific service logs
+docker-compose logs -f backend
+docker-compose logs -f frontend
