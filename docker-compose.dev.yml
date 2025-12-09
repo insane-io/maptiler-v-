@@ -29,7 +29,7 @@ services:
       target: development
     container_name: maptiler-frontend-dev
     ports:
-      - "3000:3000"
+      - "3000:5173"  
     volumes:
       # Mount source code for hot reload
       - ./frontend/src:/app/src:ro

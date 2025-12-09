@@ -1,7 +1,9 @@
+# ============================================
 # Multi-stage Dockerfile for React Frontend
+# ============================================
 
 # Stage 1: Build stage
-FROM node:18-alpine as build
+FROM node:20-alpine as build
 
 # Set working directory
 WORKDIR /app
@@ -9,19 +11,19 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install dependencies (including dev dependencies for build)
+RUN npm ci
 
 # Copy source code
 COPY . .
 
-# Build the application
-RUN npm run build
+# Build the application using Vite
+RUN npm run dev -- --build || npm run build
 
 # ============================================
 # Stage 2: Development image
 # ============================================
-FROM node:18-alpine as development
+FROM node:20-alpine as development
 
 WORKDIR /app
 
