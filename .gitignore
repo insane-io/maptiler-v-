@@ -1,0 +1,11 @@
+# Environment variables (NEVER commit these!)
+.env
+.env.local
+.env.*.local
+backend/.env
+frontend/.env
+
+# But DO commit the template
+!.env.example
+backend/.env
+.env.example

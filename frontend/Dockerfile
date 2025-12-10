@@ -1,27 +1,41 @@
 # ============================================
 # Multi-stage Dockerfile for React Frontend
+# Supports both development and production
 # ============================================
 
-# Stage 1: Build stage
+# ============================================
+# Stage 1: Build stage (for production)
+# ============================================
 FROM node:20-alpine as build
 
-# Set working directory
 WORKDIR /app
+
+# Accept build arguments for Vite environment variables
+ARG VITE_MAPTILER_KEY
+ARG VITE_OPENWEATHER_KEY
+ARG VITE_WAQI_TOKEN
+ARG VITE_APP_API_URL=http://localhost:8000
+
+# Set environment variables for build process
+ENV VITE_MAPTILER_KEY=$VITE_MAPTILER_KEY
+ENV VITE_OPENWEATHER_KEY=$VITE_OPENWEATHER_KEY
+ENV VITE_WAQI_TOKEN=$VITE_WAQI_TOKEN
+ENV VITE_APP_API_URL=$VITE_APP_API_URL
 
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies (including dev dependencies for build)
+# Install dependencies
 RUN npm ci
 
 # Copy source code
 COPY . .
 
-# Build the application using Vite
-RUN npm run dev -- --build || npm run build
+# Build the application
+RUN npm run build
 
 # ============================================
-# Stage 2: Development image
+# Stage 2: Development image (hot reload)
 # ============================================
 FROM node:20-alpine as development
 
@@ -36,10 +50,10 @@ RUN npm install
 # Copy source code
 COPY . .
 
-# Expose port
-EXPOSE 3000
+# Expose Vite dev server port
+EXPOSE 5173
 
-# Development command (with hot reload)
+# Development command with hot reload
 CMD ["npm", "start"]
 
 # ============================================
@@ -58,7 +72,7 @@ EXPOSE 80
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
+    CMD wget --quiet --tries=1 --spider http://localhost/health || exit 1
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]

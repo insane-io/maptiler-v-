@@ -6,16 +6,24 @@ import type {
   WaveColorScheme,
 } from '../types';
 
-// API Keys
+// API Keys - loaded from environment variables
 export const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;
 export const OPENWEATHER_KEY = import.meta.env.VITE_OPENWEATHER_KEY;
 export const WAQI_TOKEN = import.meta.env.VITE_WAQI_TOKEN;
 
-// Debug logging
-console.log('🔑 API Keys Status:');
-console.log('  MapTiler:', MAPTILER_KEY ? '✅ Loaded' : '❌ Missing');
-console.log('  OpenWeather:', OPENWEATHER_KEY ? '✅ Loaded' : '❌ Missing');
-console.log('  WAQI:', WAQI_TOKEN ? '✅ Loaded' : '❌ Missing');
+// Validate keys are loaded (development only)
+if (import.meta.env.DEV) {
+  console.log('🔑 API Keys Status:');
+  console.log('  MapTiler:', MAPTILER_KEY ? '✅ Loaded' : '❌ Missing');
+  console.log('  OpenWeather:', OPENWEATHER_KEY ? '✅ Loaded' : '❌ Missing');
+  console.log('  WAQI:', WAQI_TOKEN ? '✅ Loaded' : '❌ Missing');
+  
+  if (!MAPTILER_KEY || !OPENWEATHER_KEY || !WAQI_TOKEN) {
+    console.error('⚠️ Some API keys are missing! Check your .env file');
+  }
+}
+
+// Rest of your constants...
 
 // Map Configuration
 export const MAP_CONFIG: MapConfig = {

@@ -14,6 +14,8 @@ services:
       # Mount source code for hot reload
       - ./backend/app:/app/app:ro
       - ./backend/.env:/app/.env:ro
+    env_file:
+      - ./backend/.env
     environment:
       - ENVIRONMENT=development
       - DEBUG=True
@@ -29,13 +31,15 @@ services:
       target: development
     container_name: maptiler-frontend-dev
     ports:
-      - "3000:5173"  
+      - "3000:5173"
     volumes:
       # Mount source code for hot reload
       - ./frontend/src:/app/src:ro
       - ./frontend/public:/app/public:ro
+      - ./frontend/.env:/app/.env:ro
+    env_file:
+      - ./frontend/.env
     environment:
-      - REACT_APP_API_URL=http://localhost:8000
       - CHOKIDAR_USEPOLLING=true
     depends_on:
       - backend

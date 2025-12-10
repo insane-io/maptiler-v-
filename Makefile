@@ -296,3 +296,19 @@ all: install qa build docker-build
 	@echo "║                                                                  ║"
 	@echo "╚══════════════════════════════════════════════════════════════════╝"
 	@echo ""
+
+
+
+# Production commands  
+docker-build-prod:
+	@echo "$(BLUE)🐳 Building production Docker images...$(NC)"
+	@docker-compose -p maptiler build
+	@echo "$(GREEN)✅ Production images built!$(NC)"
+
+docker-up-prod:
+	@echo "$(BLUE)🐳 Starting production services...$(NC)"
+	@docker-compose -p maptiler up -d
+	@echo ""
+	@echo "$(GREEN)✅ Production services started!$(NC)"
+	@echo "  Backend:  http://localhost:8000"
+	@echo "  Frontend: http://localhost"
