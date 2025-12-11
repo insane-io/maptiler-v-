@@ -1,5 +1,6 @@
 import axios, { AxiosResponse } from 'axios';
-import type { WeatherApiResponse, AQIApiResponse } from '../types';
+
+import type { AQIApiResponse, WeatherApiResponse } from '../types';
 import { OPENWEATHER_KEY, WAQI_TOKEN } from '../utils/constants';
 
 /**
@@ -53,9 +54,7 @@ export async function fetchWeatherBatch(
   locations: Array<{ lat: number; lon: number }>
 ): Promise<WeatherApiResponse[]> {
   try {
-    const promises = locations.map((loc) =>
-      fetchWeatherData(loc.lat, loc.lon)
-    );
+    const promises = locations.map((loc) => fetchWeatherData(loc.lat, loc.lon));
     return await Promise.all(promises);
   } catch (error) {
     console.error('❌ Batch Weather Fetch Error:', error);
@@ -70,9 +69,7 @@ export async function fetchAQIBatch(
   locations: Array<{ lat: number; lon: number }>
 ): Promise<AQIApiResponse[]> {
   try {
-    const promises = locations.map((loc) =>
-      fetchAQIData(loc.lat, loc.lon)
-    );
+    const promises = locations.map((loc) => fetchAQIData(loc.lat, loc.lon));
     return await Promise.all(promises);
   } catch (error) {
     console.error('❌ Batch AQI Fetch Error:', error);

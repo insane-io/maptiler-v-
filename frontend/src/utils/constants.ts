@@ -1,9 +1,9 @@
-import type { 
-  AQIColorScheme, 
-  WaveColorScheme, 
-  CycloneCategoryMap, 
-  RefreshIntervals, 
-  MapConfig 
+import type {
+  AQIColorScheme,
+  CycloneCategoryMap,
+  MapConfig,
+  RefreshIntervals,
+  WaveColorScheme,
 } from '../types';
 
 // API Keys
@@ -28,20 +28,20 @@ export const MAP_CONFIG: MapConfig = {
 
 // AQI Color Scheme (Per Task Document - Standard)
 export const AQI_COLORS: AQIColorScheme = {
-  GOOD: '#2ecc71',           // 0-50
-  MODERATE: '#f1c40f',       // 51-100
-  USG: '#e67e22',            // 101-150 (Unhealthy for Sensitive Groups)
-  UNHEALTHY: '#e74c3c',      // 151-200
+  GOOD: '#2ecc71', // 0-50
+  MODERATE: '#f1c40f', // 51-100
+  USG: '#e67e22', // 101-150 (Unhealthy for Sensitive Groups)
+  UNHEALTHY: '#e74c3c', // 151-200
   VERY_UNHEALTHY: '#8e44ad', // 201-300
-  HAZARDOUS: '#7d0505',      // 300+
+  HAZARDOUS: '#7d0505', // 300+
 };
 
 // Wave Height Color Scheme (for heatmap)
 export const WAVE_COLORS: WaveColorScheme = {
-  LOW: '#3498db',       // 0-1m
-  MEDIUM: '#f39c12',    // 1-3m
-  HIGH: '#e74c3c',      // 3-5m
-  EXTREME: '#c0392b',   // 5m+
+  LOW: '#3498db', // 0-1m
+  MEDIUM: '#f39c12', // 1-3m
+  HIGH: '#e74c3c', // 3-5m
+  EXTREME: '#c0392b', // 5m+
 };
 
 // Cyclone Categories
@@ -57,8 +57,8 @@ export const CYCLONE_CATEGORIES: CycloneCategoryMap = {
 
 // Data refresh intervals (milliseconds)
 export const REFRESH_INTERVALS: RefreshIntervals = {
-  VESSELS: 30000,    // 30 seconds (real-time)
-  CYCLONES: 360000,  // 6 minutes
-  WAVES: 600000,     // 10 minutes
-  AQI: 1800000,      // 30 minutes
+  VESSELS: 30000, // 30 seconds (real-time)
+  CYCLONES: 360000, // 6 minutes
+  WAVES: 600000, // 10 minutes
+  AQI: 1800000, // 30 minutes
 };
